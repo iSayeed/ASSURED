@@ -156,6 +156,11 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
     
     return lca.score
 
+# list of fast chargers 
+
+fast_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' in x['name']]
+overnight_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' not in x['name'] and '600' not in x['name']]
+
 st.write('18m bus')
 st.write((do_lca(bus18mproduction)/personkm18m)*1000)
 st.write(do_lca(usephase18m)*1000)
@@ -163,3 +168,22 @@ st.write(do_lca(usephase18m)*1000)
 st.write('12m bus')
 st.write((do_lca(bus12mproduction)/personkm12m)*1000)
 st.write(do_lca(usephase12m)*1000)
+
+#Fleet lca 
+
+total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+
+fu_fc = [x for x in fast_charger_activity if str(fc_power) in x['name']][0]
+fu_oc = [x for x in overnight_charger_activity if str(oc_power) in x['name']][0]
+
+fc_charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
+
+st.write('total bus impact')
+st.write(total_imact_bus)
+st.write('total charger impact')
+st.write(fc_charger_impact)
+
+st.write(do_lca(fu_fc))
+st.write(do_lca(fu_oc))
+st.write(do_lca(bus18mproduction))
+
