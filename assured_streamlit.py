@@ -114,7 +114,7 @@ st.write(yearly_consumption_12m)
     
 #lifetimekm = 
 
-# brightway2 
+# brightway2  
 
 bw.projects.set_current('ASSURED')
 
@@ -122,9 +122,41 @@ busdb = bw.Database('assured bus')
 
 # select the 18m bus 
 
+
+
+def set_charger_share_usephase(usephase): 
+    chargers = [x for x in usephase.technosphere() if 'charger' in x['name']]
+    
+    #set all values to zero 
+    for exc in chargers: 
+        exc['amount'] = 0 
+        exc.save()
+    
+    #fastcharger share 
+    
+    fc_act = [x for x in chargers if 'pantograph' in x['name'] and str(fc_power) in x['name']][0]
+    fc_act['amount'] = fc/(n18m_bus+n12m_bus)
+    fc_act.save()
+    
+    #oc charger share 
+    
+    oc_act = [x for x in chargers if 'pantograph' not in x['name'] and str(oc_power) in x['name']][0]
+    oc_act['amount'] = oc/(n18m_bus+n12m_bus)
+    oc_act.save()
+
+def set_electric_demand(usephase, avg_passenger, yearly_consumption): 
+    electricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
+    personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
+    electricity['amount'] = yearly_consumption*lifetime / personkm
+    electricity.save()
+    
+
 bus18mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 18m ASSURED' in x['name']][0]
 
-usephase18m = [x for x in busdb if 'use phase opportunity charging, 18m ASSURED' in x['name']][0]
+usephase18m = [x for x in busdb if 'use phase opportunity charging, 18m ASSURED - single bus' in x['name']][0]
+
+set_charger_share_usephase(usephase18m)
+#update the charger share 
 
 # electricity in the use phase 
 electricity = [x for x in usephase18m.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
@@ -135,7 +167,9 @@ electricity.save()
 # 12m bus 
 bus12mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 13m ASSURED' in x['name']][0]
 
-usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED' in x['name']][0]
+usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED - single bus' in x['name']][0]
+
+set_charger_share_usephase(usephase12m)
 
 # electricity in the use phase 
 electricity12 = [x for x in usephase12m.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
@@ -153,7 +187,7 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
     lca = bw.LCA({fu:1}, method)
     lca.lci()
     lca.lcia()
-    
+
     return lca.score
 
 # list of fast chargers 
@@ -184,6 +218,20 @@ st.write('total charger impact')
 st.write(fc_charger_impact)
 
 st.write(do_lca(fu_fc))
-st.write(do_lca(fu_oc))
+st.write(do_lca(fu_oc)) 
 st.write(do_lca(bus18mproduction))
 
+def update_names_in_exchanges(activity): 
+    for x in activity.technosphere(): 
+        x['name'] = bw.get_activity(x['input'])['name']
+        x.save()
+        
+
+def diesel_bus():
+    lifetime_diesel_liter = (fuel_rate/100) * route.annual_distance * lifetime
+                                
+    lifetime_co2 = lifetime_diesel_liter * 2.68  # 1 liter of diesel produces 2.68 kg CO2
+    
+    lifetime_diesel_kg = lifetime_diesel_liter*0.832  # 1 liter of diesel 0.832 kg of diesel 
+    
+    lifetime_km = route.annual_distance * lifetime
