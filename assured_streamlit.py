@@ -112,7 +112,7 @@ yearly_consumption_12m =( march12 + june12 + sept12 + dec12) *3*30
 st.write(yearly_consumption_18m)
 st.write(yearly_consumption_12m)
     
-#lifetimekm = 
+annual_distance = return_trip_distance * number_of_return_trip_per_day * 365
 
 # brightway2  
 
@@ -124,7 +124,7 @@ busdb = bw.Database('assured bus')
 
 
 
-def set_charger_share_usephase(usephase): 
+def set_charger_share_usephase(usephase,pmkm): 
     chargers = [x for x in usephase.technosphere() if 'charger' in x['name']]
     
     #set all values to zero 
@@ -135,13 +135,13 @@ def set_charger_share_usephase(usephase):
     #fastcharger share 
     
     fc_act = [x for x in chargers if 'pantograph' in x['name'] and str(fc_power) in x['name']][0]
-    fc_act['amount'] = fc/(n18m_bus+n12m_bus)
+    fc_act['amount'] = (fc/(n18m_bus+n12m_bus))/pmkm
     fc_act.save()
     
     #oc charger share 
     
     oc_act = [x for x in chargers if 'pantograph' not in x['name'] and str(oc_power) in x['name']][0]
-    oc_act['amount'] = oc/(n18m_bus+n12m_bus)
+    oc_act['amount'] = (oc/(n18m_bus+n12m_bus))/pmkm
     oc_act.save()
 
 def set_electric_demand(usephase, avg_passenger, yearly_consumption): 
@@ -149,33 +149,58 @@ def set_electric_demand(usephase, avg_passenger, yearly_consumption):
     personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
     electricity['amount'] = yearly_consumption*lifetime / personkm
     electricity.save()
+
+def setup_diesel_bus_usephase(fuel_rate, annual_distance, lifetime, bussize):
+    lifetime_diesel_liter = (fuel_rate/100) * annual_distance * lifetime
+                                
+    lifetime_co2 = lifetime_diesel_liter * 2.68  # 1 liter of diesel produces 2.68 kg CO2
     
+    lifetime_diesel_kg = lifetime_diesel_liter*0.832  # 1 liter of diesel 0.832 kg of diesel 
+    
+    if bussize == 18: 
+        avgpassenger = average_passengers_18m
+    else: 
+        avgpassenger = average_passengers_12m
+    
+    personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avgpassenger
+    
+    
+    # set the diesel kg in the use phase activity 
+    usephasebus = [x for x in busdb if 'use phase passenger bus, diesel, ' +str(bussize)+'m ASSURED' in x['name']][0] 
+    
+    market_diesel = [x for x in usephasebus.technosphere() if 'market for diesel' in x['name']][0]
+    market_diesel['amount'] = lifetime_diesel_kg/personkm
+    market_diesel.save()
+    
+    #set the co2 emission in the biosphere
+    
+    co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
+    co2['amount'] = lifetime_co2/personkm
+    co2.save()
 
+#18m bus
 bus18mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 18m ASSURED' in x['name']][0]
-
 usephase18m = [x for x in busdb if 'use phase opportunity charging, 18m ASSURED - single bus' in x['name']][0]
 
-set_charger_share_usephase(usephase18m)
-#update the charger share 
+bus18mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 18m ASSURED' in x['name']][0]
+use18mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 18m ASSURED' in x['name']][0] 
 
-# electricity in the use phase 
-electricity = [x for x in usephase18m.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
 personkm18m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-electricity['amount'] = yearly_consumption_18m*lifetime / personkm18m
-electricity.save()
+set_charger_share_usephase(usephase18m,personkm18m)
+set_electric_demand(usephase18m, average_passengers_18m, yearly_consumption_18m)
+
 
 # 12m bus 
 bus12mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 13m ASSURED' in x['name']][0]
 
 usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED - single bus' in x['name']][0]
 
-set_charger_share_usephase(usephase12m)
+bus12mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 13m ASSURED' in x['name']][0]
+use12mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 13m ASSURED' in x['name']][0] 
 
-# electricity in the use phase 
-electricity12 = [x for x in usephase12m.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
 personkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-electricity12['amount'] = yearly_consumption_12m*lifetime / personkm12m
-electricity12.save()
+set_charger_share_usephase(usephase12m,personkm12m)
+set_electric_demand(usephase12m, average_passengers_12m, yearly_consumption_12m)
 
 
 
@@ -199,9 +224,30 @@ st.write('18m bus')
 st.write((do_lca(bus18mproduction)/personkm18m)*1000)
 st.write(do_lca(usephase18m)*1000)
 
+st.write('18m diesel')
+personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
+st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
+st.write(do_lca(use18mdiesel)*1000)
+# for diesel 
+setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
+
 st.write('12m bus')
 st.write((do_lca(bus12mproduction)/personkm12m)*1000)
 st.write(do_lca(usephase12m)*1000)
+
+st.write('12m bus diesel')
+personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
+st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
+st.write(do_lca(use12mdiesel)*1000)
+
+#for dieel 
+setup_diesel_bus_usephase(40,annual_distance, 12, 13)
+
+# '''
+# ['use phase passenger bus, diesel, 13m ASSURED' (passenger-kilometer, RER, None),
+#  'use phase, passenger bus, diesel, 18m ASSURED' (passenger-kilometer, RER, None)]
+# '''
+
 
 #Fleet lca 
 
@@ -218,7 +264,7 @@ st.write('total charger impact')
 st.write(fc_charger_impact)
 
 st.write(do_lca(fu_fc))
-st.write(do_lca(fu_oc)) 
+st.write(do_lca(fu_oc))
 st.write(do_lca(bus18mproduction))
 
 def update_names_in_exchanges(activity): 
@@ -227,11 +273,6 @@ def update_names_in_exchanges(activity):
         x.save()
         
 
-def diesel_bus():
-    lifetime_diesel_liter = (fuel_rate/100) * route.annual_distance * lifetime
-                                
-    lifetime_co2 = lifetime_diesel_liter * 2.68  # 1 liter of diesel produces 2.68 kg CO2
+
     
-    lifetime_diesel_kg = lifetime_diesel_liter*0.832  # 1 liter of diesel 0.832 kg of diesel 
     
-    lifetime_km = route.annual_distance * lifetime
