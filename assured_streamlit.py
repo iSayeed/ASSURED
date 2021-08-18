@@ -222,27 +222,27 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
 fast_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' in x['name']]
 overnight_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' not in x['name'] and '600' not in x['name']]
 
-st.write('18m bus')
-st.write((do_lca(bus18mproduction)/personkm18m)*1000)
-st.write(do_lca(usephase18m)*1000)
+# st.write('18m bus')
+# st.write((do_lca(bus18mproduction)/personkm18m)*1000)
+# st.write(do_lca(usephase18m)*1000)
 
-st.write('18m diesel')
-setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
-personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
-st.write(do_lca(use18mdiesel)*1000)
-# for diesel 
+# st.write('18m diesel')
+# setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
+
+# st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
+# st.write(do_lca(use18mdiesel)*1000)
+# # for diesel 
 
 
-st.write('12m bus')
-st.write((do_lca(bus12mproduction)/personkm12m)*1000)
-st.write(do_lca(usephase12m)*1000)
+# st.write('12m bus')
+# st.write((do_lca(bus12mproduction)/personkm12m)*1000)
+# st.write(do_lca(usephase12m)*1000)
 
-st.write('12m bus diesel')
-setup_diesel_bus_usephase(40,annual_distance, 12, 13)
-personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
-st.write(do_lca(use12mdiesel)*1000)
+# st.write('12m bus diesel')
+# setup_diesel_bus_usephase(40,annual_distance, 12, 13)
+
+# st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
+# st.write(do_lca(use12mdiesel)*1000)
 
 #for dieel 
 
@@ -254,7 +254,8 @@ st.write(do_lca(use12mdiesel)*1000)
 
 
 #Fleet lca 
-
+personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
+personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
 diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
 diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
 assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
@@ -272,22 +273,22 @@ fu_oc = [x for x in overnight_charger_activity if str(oc_power) in x['name']][0]
 
 fc_charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
 
-st.write('total bus impact')
-st.write(total_imact_bus)
-st.write('total charger impact')
-st.write(fc_charger_impact)
-st.write('total use phase impact')
-total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
-st.write(total_use_impact_assured)
+# st.write('total bus impact')
+# st.write(total_imact_bus)
+# st.write('total charger impact')
+# st.write(fc_charger_impact)
+# st.write('total use phase impact')
+# total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+# st.write(total_use_impact_assured)
 
-st.write('now for diesel')
-st.write('total diesel bus impact')
-total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
-st.write(total_diesel_bus_impact)
+# st.write('now for diesel')
+# st.write('total diesel bus impact')
+# total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+# st.write(total_diesel_bus_impact)
 
-st.write('total use phase impact')
-total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
-st.write(total_use_impact_diesel)
+# st.write('total use phase impact')
+# total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+# st.write(total_use_impact_diesel)
 
 # st.write(do_lca(fu_fc))
 # st.write(do_lca(fu_oc))
@@ -318,16 +319,23 @@ width = 0.35       # the width of the bars: can also be len(x) sequence
 
 fig, ax = plt.subplots()
 sns.set_style("whitegrid")
-ax.bar(labels, production_phase, width, label='Production Phase')
+ax.bar(labels, production_phase, width, label='Production + EoL')
 ax.bar(labels, use_phase, width, bottom=production_phase,
-       label='use phase')
+       label='Use phase')
 
-ax.set_ylabel('g CO2 pkm')
+ax.set_ylabel('g CO2-eq /pkm')
 ax.legend()
 
 st.pyplot(fig)
 
+#make dataframe 
 
+bus_dict = { 'Buses': labels, 'Production + EoL': production_phase, 'Use Phase': use_phase }
+df = pd.DataFrame(bus_dict)
+df.set_index('Buses')
+
+
+st.write(df)
 #plotting of total fleet
 # before that, let's make the charger share to zero 
 set_charger_share_usephase(usephase18m,personkm18m, 0)
@@ -349,12 +357,18 @@ width = 0.35       # the width of the bars: can also be len(x) sequence
 
 fig, ax = plt.subplots()
 sns.set_style("whitegrid")
-ax.bar(labels, production_phase, width, label='Production Phase', color='#ff3333')
+ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
 ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
 ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
-       label='use phase', color='#3333ff')
+       label='Use phase', color='#3333ff')
 
-ax.set_ylabel('g CO2 pkm')
+ax.set_ylabel('g CO2-eq /pkm')
 ax.legend()
 
 st.pyplot(fig)    
+
+fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
+df2 = pd.DataFrame(fleet_dict)
+df2.set_index('Fleets')
+
+st.write(df2)
