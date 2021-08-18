@@ -124,25 +124,27 @@ busdb = bw.Database('assured bus')
 
 
 
-def set_charger_share_usephase(usephase,pmkm): 
+def set_charger_share_usephase(usephase,pmkm, on): 
     chargers = [x for x in usephase.technosphere() if 'charger' in x['name']]
     
     #set all values to zero 
     for exc in chargers: 
         exc['amount'] = 0 
         exc.save()
+        
     
-    #fastcharger share 
-    
-    fc_act = [x for x in chargers if 'pantograph' in x['name'] and str(fc_power) in x['name']][0]
-    fc_act['amount'] = (fc/(n18m_bus+n12m_bus))/pmkm
-    fc_act.save()
-    
-    #oc charger share 
-    
-    oc_act = [x for x in chargers if 'pantograph' not in x['name'] and str(oc_power) in x['name']][0]
-    oc_act['amount'] = (oc/(n18m_bus+n12m_bus))/pmkm
-    oc_act.save()
+        #fastcharger share 
+    if on ==1:
+        
+        fc_act = [x for x in chargers if 'pantograph' in x['name'] and str(fc_power) in x['name']][0]
+        fc_act['amount'] = (fc/(n18m_bus+n12m_bus))/pmkm
+        fc_act.save()
+        
+        #oc charger share 
+        
+        oc_act = [x for x in chargers if 'pantograph' not in x['name'] and str(oc_power) in x['name']][0]
+        oc_act['amount'] = (oc/(n18m_bus+n12m_bus))/pmkm
+        oc_act.save()
 
 def set_electric_demand(usephase, avg_passenger, yearly_consumption): 
     electricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
@@ -186,7 +188,7 @@ bus18mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 18m ASSURE
 use18mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 18m ASSURED' in x['name']][0] 
 
 personkm18m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-set_charger_share_usephase(usephase18m,personkm18m)
+set_charger_share_usephase(usephase18m,personkm18m, 1)
 set_electric_demand(usephase18m, average_passengers_18m, yearly_consumption_18m)
 
 
@@ -199,7 +201,7 @@ bus12mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 13m ASSURE
 use12mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 13m ASSURED' in x['name']][0] 
 
 personkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-set_charger_share_usephase(usephase12m,personkm12m)
+set_charger_share_usephase(usephase12m,personkm12m, 1)
 set_electric_demand(usephase12m, average_passengers_12m, yearly_consumption_12m)
 
 
@@ -327,6 +329,10 @@ st.pyplot(fig)
 
 
 #plotting of total fleet
+# before that, let's make the charger share to zero 
+set_charger_share_usephase(usephase18m,personkm18m, 0)
+set_charger_share_usephase(usephase12m,personkm12m, 0)
+
 total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
 total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
 charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
