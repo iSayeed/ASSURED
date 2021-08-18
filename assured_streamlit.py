@@ -160,13 +160,13 @@ def setup_diesel_bus_usephase(fuel_rate, annual_distance, lifetime, bussize):
     if bussize == 18: 
         avgpassenger = average_passengers_18m
     else: 
-        avgpassenger = average_passengers_12m
+        avgpassenger = average_passengers_12m 
     
     personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avgpassenger
     
     
     # set the diesel kg in the use phase activity 
-    usephasebus = [x for x in busdb if 'use phase passenger bus, diesel, ' +str(bussize)+'m ASSURED' in x['name']][0] 
+    usephasebus = [x for x in busdb if 'use phase passenger-bus, diesel, ' +str(bussize)+'m ASSURED' in x['name']][0] 
     
     market_diesel = [x for x in usephasebus.technosphere() if 'market for diesel' in x['name']][0]
     market_diesel['amount'] = lifetime_diesel_kg/personkm
@@ -174,7 +174,7 @@ def setup_diesel_bus_usephase(fuel_rate, annual_distance, lifetime, bussize):
     
     #set the co2 emission in the biosphere
     
-    co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
+    co2 = [x for x in usephasebus.biosphere()][0]
     co2['amount'] = lifetime_co2/personkm
     co2.save()
 
@@ -225,23 +225,25 @@ st.write((do_lca(bus18mproduction)/personkm18m)*1000)
 st.write(do_lca(usephase18m)*1000)
 
 st.write('18m diesel')
+setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
 personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
 st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
 st.write(do_lca(use18mdiesel)*1000)
 # for diesel 
-setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
+
 
 st.write('12m bus')
 st.write((do_lca(bus12mproduction)/personkm12m)*1000)
 st.write(do_lca(usephase12m)*1000)
 
 st.write('12m bus diesel')
+setup_diesel_bus_usephase(40,annual_distance, 12, 13)
 personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
 st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
 st.write(do_lca(use12mdiesel)*1000)
 
 #for dieel 
-setup_diesel_bus_usephase(40,annual_distance, 12, 13)
+
 
 # '''
 # ['use phase passenger bus, diesel, 13m ASSURED' (passenger-kilometer, RER, None),
@@ -250,6 +252,16 @@ setup_diesel_bus_usephase(40,annual_distance, 12, 13)
 
 
 #Fleet lca 
+
+diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
+diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
+assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
+
+diesel12use =do_lca(use12mdiesel)*1000
+diesel18use = do_lca(use18mdiesel)*1000
+assured12use =do_lca(usephase12m)*1000
+assured18use =do_lca(usephase18m)*1000
 
 total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
 
@@ -262,10 +274,22 @@ st.write('total bus impact')
 st.write(total_imact_bus)
 st.write('total charger impact')
 st.write(fc_charger_impact)
+st.write('total use phase impact')
+total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+st.write(total_use_impact_assured)
 
-st.write(do_lca(fu_fc))
-st.write(do_lca(fu_oc))
-st.write(do_lca(bus18mproduction))
+st.write('now for diesel')
+st.write('total diesel bus impact')
+total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+st.write(total_diesel_bus_impact)
+
+st.write('total use phase impact')
+total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+st.write(total_use_impact_diesel)
+
+# st.write(do_lca(fu_fc))
+# st.write(do_lca(fu_oc))
+# st.write(do_lca(bus18mproduction))
 
 def update_names_in_exchanges(activity): 
     for x in activity.technosphere(): 
@@ -273,6 +297,58 @@ def update_names_in_exchanges(activity):
         x.save()
         
 
+# plotting ref: https://matplotlib.org/stable/gallery/lines_bars_and_markers/bar_stacked.html
 
+diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
+diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
+assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
+
+diesel12use =do_lca(use12mdiesel)*1000
+diesel18use = do_lca(use18mdiesel)*1000
+assured12use =do_lca(usephase12m)*1000
+assured18use =do_lca(usephase18m)*1000
+
+labels = ['Diesel Bus 12m', 'Diesel Bus 18m', 'ASSURED Bus 12m', 'ASSURED Bus 18m']
+production_phase = [diesel12production,diesel18production,assured12production,assured18production ]
+use_phase = [diesel12use,diesel18use,assured12use,assured18use]
+width = 0.35       # the width of the bars: can also be len(x) sequence
+
+fig, ax = plt.subplots()
+sns.set_style("whitegrid")
+ax.bar(labels, production_phase, width, label='Production Phase')
+ax.bar(labels, use_phase, width, bottom=production_phase,
+       label='use phase')
+
+ax.set_ylabel('g CO2 pkm')
+ax.legend()
+
+st.pyplot(fig)
+
+
+#plotting of total fleet
+total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
     
-    
+
+total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+
+labels = ['Diesel Technology', 'ASSURED Technology']
+production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+charger =np.array([0, charger_impact])
+use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+width = 0.35       # the width of the bars: can also be len(x) sequence
+
+fig, ax = plt.subplots()
+sns.set_style("whitegrid")
+ax.bar(labels, production_phase, width, label='Production Phase', color='#ff3333')
+ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+       label='use phase', color='#3333ff')
+
+ax.set_ylabel('g CO2 pkm')
+ax.legend()
+
+st.pyplot(fig)    
