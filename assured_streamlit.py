@@ -55,6 +55,11 @@ data = {'Barcelona H16': [8,5,15,1,2,600,100,455,270,570,313,588,306, 450,273,23
         'Gothenburg R55': [0,8,15,2,1,290,150,0,421,0,388,0,388, 0,455,15.2,13,10,20],
         'Onsaburk L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20]}
 busline = st.radio('Select bus line', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Onsaburk L33'])
+
+country = {'Barcelona H16': 'ES', 
+        'Barcelona L33': 'ES',
+        'Gothenburg R55': 'SE',
+        'Onsaburk L33': 'DE'}
 st.write(busline)
 # button = st.button('Calculate')
 
@@ -116,6 +121,16 @@ with st.form(key = 'Bus Info') :
     average_passengers_18m = int(route[3].text_input("Average Passenger per trip in 18m bus", data[busline][18]  ))
     
     submitted = st.form_submit_button('Calculate')
+    
+ #calculate lca
+    
+def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100')): 
+    
+    lca = bw.LCA({fu:1}, method)
+    lca.lci()
+    lca.lcia()
+
+    return lca.score
 
 lca = st.button('Calcualte LCA')        
 if lca:         
@@ -161,7 +176,15 @@ if lca:
             oc_act.save()
     
     def set_electric_demand(usephase, avg_passenger, yearly_consumption): 
-        electricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
+        # electricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles, 2030' in x['name']][0]
+        medium_voltage = [x for x in usephase.technosphere() if 'medium voltage' in x['name']]
+        #set all medium voltage to zero before seeting for a country 
+        for exc in medium_voltage: 
+            exc['amount'] = 0
+            exc.save()
+        #set the country now 
+        electricity = [x for x in usephase.technosphere() if 'medium voltage' in x['name'] and bw.get_activity(x['input'])['location'] == country[busline]][0]
+        print(electricity)
         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
         electricity['amount'] = yearly_consumption*lifetime / personkm
         electricity.save()
@@ -197,7 +220,9 @@ if lca:
     #18m bus
     if n18m_bus != 0: 
         bus18mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 18m ASSURED' in x['name']][0]
-        usephase18m = [x for x in busdb if 'use phase opportunity charging, 18m ASSURED - single bus' in x['name']][0]
+        usephase18m = [x for x in busdb if 'use phase opportunity charging, 18m ASSURED - single bus' in x['name'] 
+                                                                                           and 'Backup' not in x['name'] 
+                                                                                           and 'busEnergyMix' not in x['name']][0]
         
         bus18mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 18m ASSURED' in x['name']][0]
         use18mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 18m ASSURED' in x['name']][0] 
@@ -210,7 +235,9 @@ if lca:
     # 12m bus 
     bus12mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 13m ASSURED' in x['name']][0]
     
-    usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED - single bus' in x['name']][0]
+    usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED - single bus' in x['name'] 
+                                                                                           and 'Backup' not in x['name']
+                                                                                            and 'busEnergyMix' not in x['name']][0]
     
     bus12mdieselproduction = [x for x in busdb if 'Passenger bus, diesel, 13m ASSURED' in x['name']][0]
     use12mdiesel = [x for x in busdb if 'use phase passenger-bus, diesel, 13m ASSURED' in x['name']][0] 
@@ -222,15 +249,7 @@ if lca:
     
     
     
-    #calculate lca
-    
-    def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100')): 
-        
-        lca = bw.LCA({fu:1}, method)
-        lca.lci()
-        lca.lcia()
-    
-        return lca.score
+   
     
     # list of fast chargers 
     
@@ -448,3 +467,75 @@ if lca:
     df2.set_index('Fleets')
     
     st.write(df2)
+
+future = st.button('Calculate Future enegy mix')
+
+if future: 
+    #set the new usephase activity 
+    usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
+    usephase12m = [x for x in busdb if 'busEnergyMix' in x['name'] and '13m' in x['name']][0]
+    
+    #plotting of total fleet
+    
+    
+    if n18m_bus != 0:
+        pkmavg = np.mean([personkm18m, personkm12m])
+        total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+        charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
+            
+        
+        total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+        total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+        
+        labels = ['Diesel Technology', 'ASSURED Technology']
+        production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+        charger =np.array([0, charger_impact])
+        use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        sns.set_style("whitegrid")
+        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+               label='Use phase', color='#3333ff')
+        
+        ax.set_ylabel('g CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig)  
+    
+    else: 
+        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_use_impact_assured =  assured12use* n12m_bus
+        charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
+            
+        
+        total_diesel_bus_impact = diesel12production*n12m_bus 
+        total_use_impact_diesel = diesel12use* n12m_bus
+        
+        labels = ['Diesel Technology', 'ASSURED Technology']
+        production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+        charger =np.array([0, charger_impact])
+        use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        sns.set_style("whitegrid")
+        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+               label='Use phase', color='#3333ff')
+        
+        ax.set_ylabel('g CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig) 
+    
+    fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
+    df2 = pd.DataFrame(fleet_dict)
+    df2.set_index('Fleets')
+    
+    st.write(df2)
+    
