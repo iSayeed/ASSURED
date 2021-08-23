@@ -184,7 +184,7 @@ if lca:
             exc.save()
         #set the country now 
         electricity = [x for x in usephase.technosphere() if 'medium voltage' in x['name'] and bw.get_activity(x['input'])['location'] == country[busline]][0]
-        print(electricity)
+        # print(electricity)
         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
         electricity['amount'] = yearly_consumption*lifetime / personkm
         electricity.save()
@@ -468,43 +468,66 @@ if lca:
     
     st.write(df2)
 
-future = st.button('Calculate Future enegy mix')
-
-if future: 
+#future scenerio 
     #set the new usephase activity 
     usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
     usephase12m = [x for x in busdb if 'busEnergyMix' in x['name'] and '13m' in x['name']][0]
     
-    #plotting of total fleet
-    
+    def set_electric_demand_future(usephase, avg_passenger, yearly_consumption, year): 
+        # list of electricity mix of the country of the year 2030, 2040, 2050 
+        
+        allelectricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']]
+        
+        for x in allelectricity: 
+            # print(x['amount'])
+            x['amount'] = 0
+            x.save()
+            
+        
+        personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
+            
+        electriciy = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']
+                                                                                 and bw.get_activity(x['input'])['location'] == country[busline]
+                                                                                 and str(year) in x['name'] ][0]
+        electriciy['amount'] = yearly_consumption*lifetime / personkm
+        electriciy.save()
+        
     
     if n18m_bus != 0:
         pkmavg = np.mean([personkm18m, personkm12m])
         total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
-        total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
         charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
             
+        use_phase_results = {}
+        for year in [2030, 2040, 2050]: 
+            set_electric_demand_future(usephase18m, average_passengers_18m, yearly_consumption_18m, year)
+            use_phase_results[year] = do_lca(usephase18m)
         
-        total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
-        total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+        st.write(use_phase_results)
+            
+            
+        # total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
         
-        labels = ['Diesel Technology', 'ASSURED Technology']
-        production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
-        charger =np.array([0, charger_impact])
-        use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
-        width = 0.35       # the width of the bars: can also be len(x) sequence
+        # total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+        # total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
         
-        fig, ax = plt.subplots()
-        sns.set_style("whitegrid")
-        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
-        ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
-        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
-               label='Use phase', color='#3333ff')
+        # labels = ['Diesel Technology', 'ASSURED Technology']
+        # production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+        # charger =np.array([0, charger_impact])
+        # use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+        # width = 0.35       # the width of the bars: can also be len(x) sequence
         
-        ax.set_ylabel('g CO2-eq /pkm')
-        ax.legend()
+        # fig, ax = plt.subplots()
+        # sns.set_style("whitegrid")
+        # ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
+        # ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+        # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+        #        label='Use phase', color='#3333ff')
         
-        st.pyplot(fig)  
+        # ax.set_ylabel('g CO2-eq /pkm')
+        # ax.legend()
+        
+        # st.pyplot(fig)  
     
     else: 
         total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
