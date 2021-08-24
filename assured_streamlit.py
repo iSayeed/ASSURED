@@ -428,10 +428,10 @@ if lca:
         
         fig, ax = plt.subplots()
         plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
-        ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charge')
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
-               label='Use phase', color='#3333ff')
+               label='Use phase')
         
         ax.set_ylabel('g CO2-eq /pkm')
         ax.legend()
@@ -455,10 +455,10 @@ if lca:
         
         fig, ax = plt.subplots()
         plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
-        ax.bar(labels, charger, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
-               label='Use phase', color='#3333ff')
+               label='Use phase')
         
         ax.set_ylabel('g CO2-eq /pkm')
         ax.legend()
@@ -541,10 +541,10 @@ if lca:
         fig, ax = plt.subplots()
         # sns.set_style('darkgrid')
         plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
-        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
-                label='Use phase', color='#3333ff')
+                label='Use phase')
         
         ax.set_ylabel('g CO2-eq /pkm')
         ax.legend()
@@ -590,10 +590,10 @@ if lca:
         
         fig, ax = plt.subplots()
         plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL', color='#ff3333')
-        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger', color='#33ff33')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
-                label='Use phase', color='#3333ff')
+                label='Use phase')
         
         ax.set_ylabel('g CO2-eq /pkm')
         ax.legend()
