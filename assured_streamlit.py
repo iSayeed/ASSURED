@@ -132,7 +132,7 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
 
     return lca.score
 
-lca = st.button('Calcualte LCA')        
+lca = st.button('Calculate LCA')        
 if lca:         
     
     yearly_consumption_18m =( march18 + june18 + sept18 + dec18) *3*30
@@ -597,6 +597,6 @@ if lca:
         
         ax.set_ylabel('g CO2-eq /pkm')
         ax.legend()
-        plt.xticks(rotation= 45) 
+        # plt.xticks(rotation= 45) 
         st.pyplot(fig)  
     
