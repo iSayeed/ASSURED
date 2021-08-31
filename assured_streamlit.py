@@ -212,8 +212,15 @@ if lca:
         market_diesel.save()
         
         #set the co2 emission in the biosphere
+        #first set all the biosphere to zero 
+        all_bio = [x for x in usephasebus.biosphere()]
         
-        co2 = [x for x in usephasebus.biosphere()][0]
+        for x in all_bio: 
+            x['amount']= 0
+            x.save()
+        
+        
+        co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
         co2['amount'] = lifetime_co2/personkm
         co2.save()
     
@@ -262,8 +269,8 @@ if lca:
     # st.write((do_lca(bus18mproduction)/personkm18m)*1000)
     # st.write(do_lca(usephase18m)*1000)
     
-    # st.write('18m diesel')
-    # setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
+    st.write('18m diesel')
+    setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
     
     # st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
     # st.write(do_lca(use18mdiesel)*1000)
@@ -274,8 +281,8 @@ if lca:
     # st.write((do_lca(bus12mproduction)/personkm12m)*1000)
     # st.write(do_lca(usephase12m)*1000)
     
-    # st.write('12m bus diesel')
-    # setup_diesel_bus_usephase(40,annual_distance, 12, 13)
+    st.write('12m bus diesel')
+    setup_diesel_bus_usephase(40,annual_distance, 12, 13)
     
     # st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
     # st.write(do_lca(use12mdiesel)*1000)
