@@ -145,7 +145,7 @@ if lca:
     
     # brightway2  
     
-    bw.projects.set_current('ASSURED')
+    bw.projects.set_current('ASSURED 2')
     
     busdb = bw.Database('assured bus')
     
@@ -235,7 +235,7 @@ if lca:
     # 12m bus 
     bus12mproduction = [x for x in busdb if 'Passenger bus, electric - opportunity charging, 13m ASSURED' in x['name']][0]
     
-    usephase12m = [x for x in busdb if 'use phase - opportunity charging, 13m ASSURED - single bus' in x['name'] 
+    usephase12m = [x for x in busdb if 'use phase opportunity charging, 13m ASSURED - single bus' in x['name'] 
                                                                                            and 'Backup' not in x['name']
                                                                                             and 'busEnergyMix' not in x['name']][0]
     
@@ -253,8 +253,10 @@ if lca:
     
     # list of fast chargers 
     
-    fast_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' in x['name']]
-    overnight_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'Transformer' not in x['name'] and '600' not in x['name']]
+    fast_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'transformer' in x['name']]
+    overnight_charger_activity = [x for x in busdb if 'charger' in x['name'] and 'transformer' not in x['name'] 
+                                                                                        and 'panto' not in x['name']
+                                                                                        and '200' not in x['name']]
     
     # st.write('18m bus')
     # st.write((do_lca(bus18mproduction)/personkm18m)*1000)
@@ -508,31 +510,32 @@ if lca:
         st.write([total_diesel_bus_impact, total_use_impact_diesel ])
             
         use_phase_results = {}
-        for year in [2030, 2040, 2050]: 
+        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
             set_electric_demand_future(usephase18m, average_passengers_18m, yearly_consumption_18m, year)
             if year not in use_phase_results: 
                 use_phase_results[year] = [do_lca(usephase18m)*n18m_bus*1000]
             else: 
                 use_phase_results[year].append(do_lca(usephase18m)*n18m_bus*1000)
         
-        for year in [2030, 2040, 2050]: 
+        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
             set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
             if year not in use_phase_results: 
                 use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
             else: 
                 use_phase_results[year].append(do_lca(usephase12m)*n12m_bus*1000)
         
-        st.write(use_phase_results)
+        st.write(use_phase_results) 
         
         st.write([x for x in use_phase_results])
             
-        labels = ['Diesel Technology', '2030 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2050 \n ASSURED\n Techonology' ]
+        labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
+                  '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
         
-        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus ])
+        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
         
-        charger_production = np.array([0,charger_impact,charger_impact,charger_impact])
+        charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
         
-        use_phase = np.array([total_use_impact_diesel, sum(use_phase_results[2030]), sum(use_phase_results[2040]), sum(use_phase_results[2050])])
+        use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
         
         st.write(use_phase)
             
@@ -565,7 +568,7 @@ if lca:
             
         use_phase_results = {}
                 
-        for year in [2030, 2040, 2050]: 
+        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
             set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
             if year not in use_phase_results: 
                 use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
@@ -576,13 +579,14 @@ if lca:
         
         st.write([x for x in use_phase_results])
             
-        labels = ['Diesel Technology', '2030 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2050 \n ASSURED\n Techonology' ]
+        labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
+                  '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
         
-        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus ])
+        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
         
-        charger_production = np.array([0,charger_impact,charger_impact,charger_impact])
+        charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
         
-        use_phase = np.array([total_use_impact_diesel, sum(use_phase_results[2030]), sum(use_phase_results[2040]), sum(use_phase_results[2050])])
+        use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
         
         st.write(use_phase)
             
