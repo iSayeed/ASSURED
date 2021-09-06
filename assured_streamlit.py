@@ -53,13 +53,13 @@ st.subheader("Bus Line Information")
 data = {'Barcelona H16': [8,5,15,1,2,600,100,455,270,570,313,588,306, 450,273,23.8,6,10,20], 
         'Barcelona L33': [8,8,15,1,2,600,100,392,245,468,278,463,274, 395,247,19.4,8,10,20],
         'Gothenburg R55': [0,8,15,2,1,290,150,0,421,0,388,0,388, 0,455,15.2,13,10,20],
-        'Onsaburk L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20]}
-busline = st.radio('Select bus line', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Onsaburk L33'])
+        'Osnabrück L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20]}
+busline = st.radio('Select bus line', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Osnabrück L33'])
 
 country = {'Barcelona H16': 'ES', 
         'Barcelona L33': 'ES',
         'Gothenburg R55': 'SE',
-        'Onsaburk L33': 'DE'}
+        'Osnabrück L33': 'DE'}
 st.write(busline)
 # button = st.button('Calculate')
 
@@ -120,7 +120,7 @@ with st.form(key = 'Bus Info') :
     average_passengers_12m = int(route[2].text_input("Average Passenger per trip in 12m bus", data[busline][17]  ))
     average_passengers_18m = int(route[3].text_input("Average Passenger per trip in 18m bus", data[busline][18]  ))
     
-    submitted = st.form_submit_button('Calculate')
+    submitted = st.form_submit_button('Update')
     
  #calculate lca
     
@@ -129,9 +129,10 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
     lca = bw.LCA({fu:1}, method)
     lca.lci()
     lca.lcia()
+    do_lca.counter += 1
 
     return lca.score
-
+do_lca.counter = 0 
 lca = st.button('Calculate LCA')        
 if lca:         
     
@@ -145,7 +146,7 @@ if lca:
     
     # brightway2  
     
-    bw.projects.set_current('ASSURED 2')
+    bw.projects.set_current('ASSURED 3')
     
     busdb = bw.Database('assured bus')
     
@@ -213,11 +214,11 @@ if lca:
         
         #set the co2 emission in the biosphere
         #first set all the biosphere to zero 
-        all_bio = [x for x in usephasebus.biosphere()]
+        # all_bio = [x for x in usephasebus.biosphere()]
         
-        for x in all_bio: 
-            x['amount']= 0
-            x.save()
+        # for x in all_bio: 
+        #     x['amount']= 0
+        #     x.save()
         
         
         co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
@@ -561,6 +562,9 @@ if lca:
         plt.xticks(rotation= 0, size = 10) 
         
         st.pyplot(fig)  
+        
+        st.write('number of lca calculation')
+        st.write(do_lca.counter)
     
     else: 
         # pkmavg = np.mean([personkm18m, personkm12m])
@@ -610,4 +614,8 @@ if lca:
         ax.legend()
         # plt.xticks(rotation= 45) 
         st.pyplot(fig)  
+        
+        st.write('number of lca calculation')
+        st.write(do_lca.counter)
+        
     
