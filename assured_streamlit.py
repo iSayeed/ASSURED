@@ -197,6 +197,33 @@ if lca:
         
         lifetime_diesel_kg = lifetime_diesel_liter*0.832  # 1 liter of diesel 0.832 kg of diesel 
         
+        #cadmium 
+        cd = (0.01/1000000)*lifetime_diesel_kg
+        #copper
+        cu = (1.7/1000000)*lifetime_diesel_kg
+        #Chromium 
+        cr = (0.05/1000000)*lifetime_diesel_kg
+        #Nickel 
+        ni = (0.07/1000000)*lifetime_diesel_kg
+        #selenium 
+        se = (0.01/1000000)*lifetime_diesel_kg
+        #zinc 
+        zn = (1/1000000)*lifetime_diesel_kg
+        #lead 
+        pb = (0.00000011/1000000)*lifetime_diesel_kg
+        #mercury
+        hg = (0.00002/1000000)*lifetime_diesel_kg
+        #chromium IV
+        crvi = (0.001/1000000)*lifetime_diesel_kg
+        
+        #sulfur 
+        so2 = (0.035/349.8)*lifetime_diesel_kg
+       
+        metal = {'Cadmium':cd, 'Copper':cu, 'Chromium':cr, 'Nickel':ni, 
+                 'Selenium':se, 'Zinc':zn, 'Lead':pb, 'Mercury':hg, 
+                 'Chromium VI':crvi, 'Sulfur dioxide':so2}
+        
+        
         if bussize == 18: 
             avgpassenger = average_passengers_18m
         else: 
@@ -224,6 +251,17 @@ if lca:
         co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
         co2['amount'] = lifetime_co2/personkm
         co2.save()
+        
+        #heavy metal emission setup
+        def heavy_metal(name, amount): 
+            emission = [x for x in usephasebus.biosphere() if name == x['name'] and 'air' in bw.get_activity(x['input'])['categories'] ][0]
+            emission['amount'] = amount /personkm
+            emission.save()
+        
+        for name, amount in metal.items(): 
+            heavy_metal(name, amount)
+            
+        
     
     #18m bus
     if n18m_bus != 0: 
