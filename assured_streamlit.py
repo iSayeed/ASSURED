@@ -519,139 +519,139 @@ if lca:
     
     st.write(df2)
 
-#future scenerio 
-    #set the new usephase activity 
-    usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
-    usephase12m = [x for x in busdb if 'busEnergyMix' in x['name'] and '13m' in x['name']][0]
+# #future scenerio 
+#     #set the new usephase activity 
+#     usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
+#     usephase12m = [x for x in busdb if 'busEnergyMix' in x['name'] and '13m' in x['name']][0]
     
-    def set_electric_demand_future(usephase, avg_passenger, yearly_consumption, year): 
-        # list of electricity mix of the country of the year 2030, 2040, 2050 
+#     def set_electric_demand_future(usephase, avg_passenger, yearly_consumption, year): 
+#         # list of electricity mix of the country of the year 2030, 2040, 2050 
         
-        allelectricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']]
+#         allelectricity = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']]
         
-        for x in allelectricity: 
-            # print(x['amount'])
-            x['amount'] = 0
-            x.save()
+#         for x in allelectricity: 
+#             # print(x['amount'])
+#             x['amount'] = 0
+#             x.save()
             
         
-        personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
+#         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
             
-        electriciy = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']
-                                                                                 and bw.get_activity(x['input'])['location'] == country[busline]
-                                                                                 and str(year) in x['name'] ][0]
-        electriciy['amount'] = yearly_consumption*lifetime / personkm
-        electriciy.save()
+#         electriciy = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']
+#                                                                                  and bw.get_activity(x['input'])['location'] == country[busline]
+#                                                                                  and str(year) in x['name'] ][0]
+#         electriciy['amount'] = yearly_consumption*lifetime / personkm
+#         electriciy.save()
         
     
-    if n18m_bus != 0:
-        pkmavg = np.mean([personkm18m, personkm12m])
-        total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
-        charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
+#     if n18m_bus != 0:
+#         pkmavg = np.mean([personkm18m, personkm12m])
+#         total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+#         charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
         
-        total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
-        total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+#         total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+#         total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
         
-        st.write('diesel technology')
-        st.write([total_diesel_bus_impact, total_use_impact_diesel ])
+#         st.write('diesel technology')
+#         st.write([total_diesel_bus_impact, total_use_impact_diesel ])
             
-        use_phase_results = {}
-        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
-            set_electric_demand_future(usephase18m, average_passengers_18m, yearly_consumption_18m, year)
-            if year not in use_phase_results: 
-                use_phase_results[year] = [do_lca(usephase18m)*n18m_bus*1000]
-            else: 
-                use_phase_results[year].append(do_lca(usephase18m)*n18m_bus*1000)
+#         use_phase_results = {}
+#         for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
+#             set_electric_demand_future(usephase18m, average_passengers_18m, yearly_consumption_18m, year)
+#             if year not in use_phase_results: 
+#                 use_phase_results[year] = [do_lca(usephase18m)*n18m_bus*1000]
+#             else: 
+#                 use_phase_results[year].append(do_lca(usephase18m)*n18m_bus*1000)
         
-        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
-            set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
-            if year not in use_phase_results: 
-                use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
-            else: 
-                use_phase_results[year].append(do_lca(usephase12m)*n12m_bus*1000)
+#         for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
+#             set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
+#             if year not in use_phase_results: 
+#                 use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
+#             else: 
+#                 use_phase_results[year].append(do_lca(usephase12m)*n12m_bus*1000)
         
-        st.write(use_phase_results) 
+#         st.write(use_phase_results) 
         
-        st.write([x for x in use_phase_results])
+#         st.write([x for x in use_phase_results])
             
-        labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
-                  '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
+#         labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
+#                   '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
         
-        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
+#         production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
         
-        charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
+#         charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
         
-        use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
+#         use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
         
-        st.write(use_phase)
+#         st.write(use_phase)
             
       
         
-        fig, ax = plt.subplots()
-        # sns.set_style('darkgrid')
-        plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL')
-        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
-        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
-                label='Use phase')
+#         fig, ax = plt.subplots()
+#         # sns.set_style('darkgrid')
+#         plt.style.use('seaborn')
+#         ax.bar(labels, production_phase, width, label='Production + EoL')
+#         ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
+#         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
+#                 label='Use phase')
         
-        ax.set_ylabel('g CO2-eq /pkm')
-        ax.legend()
-        plt.xticks(rotation= 0, size = 10) 
+#         ax.set_ylabel('g CO2-eq /pkm')
+#         ax.legend()
+#         plt.xticks(rotation= 0, size = 10) 
         
-        st.pyplot(fig)  
+#         st.pyplot(fig)  
         
-        st.write('number of lca calculation')
-        st.write(do_lca.counter)
+#         st.write('number of lca calculation')
+#         st.write(do_lca.counter)
     
-    else: 
-        # pkmavg = np.mean([personkm18m, personkm12m])
-        total_imact_bus= n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
-        charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
+#     else: 
+#         # pkmavg = np.mean([personkm18m, personkm12m])
+#         total_imact_bus= n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+#         charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
         
-        total_diesel_bus_impact = diesel12production*n12m_bus 
-        total_use_impact_diesel = diesel12use* n12m_bus
+#         total_diesel_bus_impact = diesel12production*n12m_bus 
+#         total_use_impact_diesel = diesel12use* n12m_bus
         
-        st.write('diesel technology')
-        st.write([total_diesel_bus_impact, total_use_impact_diesel ])
+#         st.write('diesel technology')
+#         st.write([total_diesel_bus_impact, total_use_impact_diesel ])
             
-        use_phase_results = {}
+#         use_phase_results = {}
                 
-        for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
-            set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
-            if year not in use_phase_results: 
-                use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
-            else: 
-                use_phase_results[year].append(do_lca(usephase12m)*n12m_bus*1000)
+#         for year in [2025, 2030, 2035, 2040, 2045, 2050]: 
+#             set_electric_demand_future(usephase12m, average_passengers_12m, yearly_consumption_12m, year)
+#             if year not in use_phase_results: 
+#                 use_phase_results[year] = [do_lca(usephase12m)*n12m_bus*1000]
+#             else: 
+#                 use_phase_results[year].append(do_lca(usephase12m)*n12m_bus*1000)
         
-        st.write(use_phase_results)
+#         st.write(use_phase_results)
         
-        st.write([x for x in use_phase_results])
+#         st.write([x for x in use_phase_results])
             
-        labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
-                  '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
+#         labels = ['Diesel Technology', '2025 \n ASSURED\n Techonology', '2030 \n ASSURED\n Techonology', 
+#                   '2035 \n ASSURED\n Techonology', '2040 \n ASSURED\n Techonology', '2045 \n ASSURED\n Techonology' ,'2050 \n ASSURED\n Techonology' ]
         
-        production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
+#         production_phase = np.array([total_diesel_bus_impact, total_imact_bus, total_imact_bus, total_imact_bus,  total_imact_bus, total_imact_bus, total_imact_bus])
         
-        charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
+#         charger_production = np.array([0,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact,charger_impact])
         
-        use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
+#         use_phase = np.array([total_use_impact_diesel,sum(use_phase_results[2025]), sum(use_phase_results[2030]), sum(use_phase_results[2035]), sum(use_phase_results[2040]), sum(use_phase_results[2045]), sum(use_phase_results[2050])])
         
-        st.write(use_phase)
+#         st.write(use_phase)
             
       
         
-        fig, ax = plt.subplots()
-        plt.style.use('seaborn')
-        ax.bar(labels, production_phase, width, label='Production + EoL')
-        ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
-        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
-                label='Use phase')
+#         fig, ax = plt.subplots()
+#         plt.style.use('seaborn')
+#         ax.bar(labels, production_phase, width, label='Production + EoL')
+#         ax.bar(labels, charger_production, width, bottom =production_phase, label='Charger')
+#         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger_production]),
+#                 label='Use phase')
         
-        ax.set_ylabel('g CO2-eq /pkm')
-        ax.legend()
-        # plt.xticks(rotation= 45) 
-        st.pyplot(fig)  
+#         ax.set_ylabel('g CO2-eq /pkm')
+#         ax.legend()
+#         # plt.xticks(rotation= 45) 
+#         st.pyplot(fig)  
         
     def endpoint_plot(method): 
         if n18m_bus != 0: 
@@ -660,37 +660,41 @@ if lca:
         set_charger_share_usephase(usephase12m,personkm12m, 0)
         
         if n18m_bus != 0: 
-            diesel18use = do_lca(use18mdiesel, method = method)*1000
-            assured18use =do_lca(usephase18m, method = method)*1000
+            diesel18use = do_lca(use18mdiesel, method = method)
+            assured18use =do_lca(usephase18m, method = method)
         
-        assured12use =do_lca(usephase12m, method = method)*1000
-        diesel12use =do_lca(use12mdiesel, method = method)*1000
+        assured12use =do_lca(usephase12m, method = method)
+        diesel12use =do_lca(use12mdiesel, method = method)
         
-        st.write('use phase values of ' + method[2])
-        st.write([diesel18use,assured18use, assured12use, diesel12use])
+        # st.write('use phase values of ' + method[2])
+        # st.write([diesel18use,assured18use, assured12use, diesel12use])
         
         if n18m_bus != 0: 
             personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)*1000
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
             # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
     
         personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)*1000
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
         # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
     
     
         if n18m_bus != 0:
             pkmavg = np.mean([personkm18m, personkm12m])
-            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)*1000
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            
             total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
-            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)*1000 + (oc*do_lca(fu_oc, method = method)/pkmavg)*1000
+            
+            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)/pkmavg)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
             total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
             
-            st.write('use phase values of ' + method[2])
-            st.write([total_imact_bus,total_use_impact_assured, charger_impact, total_diesel_bus_impact,total_use_impact_diesel ])
+            # st.write('use phase values of ' + method[2])
+            # st.write([total_imact_bus,total_use_impact_assured, charger_impact, total_diesel_bus_impact,total_use_impact_diesel ])
             # st.write('diesel technology')
             # st.write([total_diesel_bus_impact, total_use_impact_diesel ])
             
@@ -707,15 +711,15 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[2])
+            ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
-            
+            plt.savefig(fname = busline + ' ' + method[2] )
             st.pyplot(fig) 
         
         else: 
-            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)*1000
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
             total_use_impact_assured =  assured12use* n12m_bus
-            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m)*1000 + (oc*do_lca(fu_oc, method = method)/personkm12m)*1000
+            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus 
@@ -734,9 +738,9 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[2])
+            ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
-            
+            plt.savefig(fname = busline + ' ' + method[2] )
             st.pyplot(fig)
             
     
