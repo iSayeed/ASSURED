@@ -477,7 +477,7 @@ if lca:
         fig, ax = plt.subplots()
         plt.style.use('seaborn')
         ax.bar(labels, production_phase, width, label='Production + EoL')
-        ax.bar(labels, charger, width, bottom =production_phase, label='Charge')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                label='Use phase')
         
@@ -538,8 +538,8 @@ if lca:
 #         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
             
 #         electriciy = [x for x in usephase.technosphere() if 'electricity supply for electric vehicles' in x['name']
-#                                                                                  and bw.get_activity(x['input'])['location'] == country[busline]
-#                                                                                  and str(year) in x['name'] ][0]
+#                                                                                   and bw.get_activity(x['input'])['location'] == country[busline]
+#                                                                                   and str(year) in x['name'] ][0]
 #         electriciy['amount'] = yearly_consumption*lifetime / personkm
 #         electriciy.save()
         
@@ -707,7 +707,7 @@ if lca:
             fig, ax = plt.subplots()
             plt.style.use('seaborn')
             ax.bar(labels, production_phase, width, label='Production + EoL')
-            ax.bar(labels, charger, width, bottom =production_phase, label='Charge')
+            ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
@@ -756,12 +756,142 @@ if lca:
                  ('ReCiPe Endpoint (H,A) (obsolete)','human health','photochemical oxidant formation'),
                  ('ReCiPe Endpoint (H,A) (obsolete)', 'human health', 'total')]
     
-    st.write(methods[0]) 
-    endpoint_plot(methods[0])
+    # st.write(methods[0]) 
+    # endpoint_plot(methods[0])
     
     for m in methods: 
         endpoint_plot(m)
     
     st.write('number of lca calculation')
     st.write(do_lca.counter) 
+
+    def endpoint_plot_stacked(method): 
+        if n18m_bus != 0: 
+            set_charger_share_usephase(usephase18m,personkm18m, 0)
+        
+        set_charger_share_usephase(usephase12m,personkm12m, 0)
+        
+        if n18m_bus != 0: 
+            diesel18use = do_lca(use18mdiesel, method = method)
+            assured18use =do_lca(usephase18m, method = method)
+        
+        assured12use =do_lca(usephase12m, method = method)
+        diesel12use =do_lca(use12mdiesel, method = method)
+        
+        # st.write('use phase values of ' + method[2])
+        # st.write([diesel18use,assured18use, assured12use, diesel12use])
+        
+        if n18m_bus != 0: 
+            personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
     
+        personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+    
+    
+        if n18m_bus != 0:
+            pkmavg = np.mean([personkm18m, personkm12m])
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            
+            total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+            
+            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)/pkmavg)
+                
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+            total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+            
+            
+            #https://www.python-graph-gallery.com/13-percent-stacked-barplot
+            # labels = ['Diesel Technology', 'ASSURED Technology']
+            # production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+            # charger =np.array([0, charger_impact])
+            # use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+            # width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            raw_data = {
+                'production_phase': [total_diesel_bus_impact,total_imact_bus], 
+                'charger': [0, charger_impact], 
+                'use_phase': [total_use_impact_diesel,total_use_impact_assured]
+                }
+            df = pd.DataFrame(raw_data)
+            
+            totals = [i+j+k for i,j,k in zip(df['production_phase'], df['charger'], df['use_phase'])]
+            production_phase = [i/j * 100 for i,j in zip(df['production_phase'], totals)]
+            charger = [i/j * 100 for i,j in zip(df['charger'], totals)]
+            use_phase = [i/j * 100 for i,j in zip(df['use_phase'], totals)]
+            
+            
+            #plot 
+            fig, ax = plt.subplots()
+            barWidth = 0.35 
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            # r = [0,1]
+            # Create production phase bar
+            ax.bar(labels, production_phase, width = barWidth, label = 'Production + EoL')
+            ax.bar(labels, charger, bottom = production_phase, width = barWidth, label = 'Charger')
+            ax.bar(labels, use_phase, bottom = [i+j for i,j in zip(production_phase,charger)]
+                                                           , width = barWidth, 
+                                                           label = 'Use Phase')
+            ax.set_ylabel(method[2])
+            ax.legend()
+            
+            
+            
+            
+            
+            # plt.style.use('seaborn')
+            # ax.bar(labels, production_phase, width, label='Production + EoL')
+            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+            #        label='Use phase')
+            
+            # ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
+            # ax.legend()
+            # plt.savefig(fname = busline + ' ' + method[2] )
+            st.pyplot(fig) 
+        
+        else: 
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_use_impact_assured =  assured12use* n12m_bus
+            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
+                
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus 
+            total_use_impact_diesel = diesel12use* n12m_bus
+            
+            raw_data = {
+                'production_phase': [total_diesel_bus_impact,total_imact_bus], 
+                'charger': [0, charger_impact], 
+                'use_phase': [total_use_impact_diesel,total_use_impact_assured]
+                }
+            df = pd.DataFrame(raw_data)
+            
+            totals = [i+j+k for i,j,k in zip(df['production_phase'], df['charger'], df['use_phase'])]
+            production_phase = [i/j * 100 for i,j in zip(df['production_phase'], totals)]
+            charger = [i/j * 100 for i,j in zip(df['charger'], totals)]
+            use_phase = [i/j * 100 for i,j in zip(df['use_phase'], totals)]
+            
+            
+            #plot 
+            fig, ax = plt.subplots()
+            barWidth = 0.35 
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            # r = [0,1]
+            # Create production phase bar
+            ax.bar(labels, production_phase, width = barWidth, label = 'Production + EoL')
+            ax.bar(labels, charger, bottom = production_phase, width = barWidth, label = 'Charger')
+            ax.bar(labels, use_phase, bottom = [i+j for i,j in zip(production_phase,charger)]
+                                                           , width = barWidth, 
+                                                           label = 'Use Phase')
+            ax.set_ylabel(method[2])
+            ax.legend()
+            st.pyplot(fig)
+    
+    st.write('100% stacked ')
+    for m in methods: 
+        endpoint_plot_stacked(m)        
