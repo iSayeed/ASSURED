@@ -146,7 +146,7 @@ if lca:
     
     # brightway2  
     
-    bw.projects.set_current('ASSURED 3')
+    bw.projects.set_current('ASSURED 4')
     
     busdb = bw.Database('assured bus')
     
@@ -189,6 +189,11 @@ if lca:
         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avg_passenger
         electricity['amount'] = yearly_consumption*lifetime / personkm
         electricity.save()
+        
+        # set the maintenance 
+        maintenance = [x for x in usephase.technosphere() if 'maintenance, bus' in x['name']][0]
+        maintenance['amount'] = 1/personkm
+        maintenance.save()
     
     def setup_diesel_bus_usephase(fuel_rate, annual_distance, lifetime, bussize):
         lifetime_diesel_liter = (fuel_rate/100) * annual_distance * lifetime
@@ -251,6 +256,11 @@ if lca:
         co2 = [x for x in usephasebus.biosphere() if 'Carbon dioxide, fossil' in x['name']][0]
         co2['amount'] = lifetime_co2/personkm
         co2.save()
+        
+        # set the maintenance 
+        maintenance = [x for x in usephasebus.technosphere() if 'maintenance, bus' in x['name']][0]
+        maintenance['amount'] = 1/personkm
+        maintenance.save()
         
         #heavy metal emission setup
         def heavy_metal(name, amount): 
@@ -653,7 +663,7 @@ if lca:
 #         # plt.xticks(rotation= 45) 
 #         st.pyplot(fig)  
         
-    def endpoint_plot(method): 
+    def endpoint_plot(method, plotnum =2): 
         if n18m_bus != 0: 
             set_charger_share_usephase(usephase18m,personkm18m, 0)
         
@@ -711,9 +721,9 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
-            plt.savefig(fname = busline + ' ' + method[2] )
+            plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig) 
         
         else: 
@@ -738,9 +748,9 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
-            plt.savefig(fname = busline + ' ' + method[2] )
+            plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig)
             
     
@@ -895,3 +905,12 @@ if lca:
     st.write('100% stacked ')
     for m in methods: 
         endpoint_plot_stacked(m)        
+    
+    #check other midpoints 
+    st.write('midpoints')
+    midpoints = [x for x in bw.methods if 'recipe' in str(x).lower()
+                                    and 'midpoint (h)' in str(x).lower()
+                                    and 'obsolete' not in str(x).lower()
+                                    and 'LT' not in str(x)]
+    for m in midpoints: 
+        endpoint_plot(m,plotnum =1)
