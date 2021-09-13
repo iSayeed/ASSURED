@@ -50,10 +50,10 @@ st.subheader("Bus Line Information")
 
 
 
-data = {'Barcelona H16': [8,5,15,1,2,600,100,455,270,570,313,588,306, 450,273,23.8,6,10,20], 
-        'Barcelona L33': [8,8,15,1,2,600,100,392,245,468,278,463,274, 395,247,19.4,8,10,20],
-        'Gothenburg R55': [0,8,15,2,1,290,150,0,421,0,388,0,388, 0,455,15.2,13,10,20],
-        'Osnabrück L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20]}
+data = {'Barcelona H16': [8,5,15,1,2,600,100,455,270,570,313,588,306, 450,273,23.8,6,10,20,75], 
+        'Barcelona L33': [8,8,15,1,2,600,100,392,245,468,278,463,274, 395,247,19.4,8,10,20,75],
+        'Gothenburg R55': [0,8,15,2,1,290,150,0,421,0,388,0,388, 0,455,15.2,13,10,20,75],
+        'Osnabrück L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20,75]}
 busline = st.radio('Select bus line', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Osnabrück L33'])
 
 country = {'Barcelona H16': 'ES', 
@@ -113,12 +113,13 @@ with st.form(key = 'Bus Info') :
     dec12 = int(dec[1].text_input("Energy demand per day of a 12m bus - December (kWh)", data[busline][14]  ))
     
     st.subheader('Route Details')
-    route = st.beta_columns(4)
+    route = st.beta_columns(5)
     
     return_trip_distance = float(route[0].text_input("Return Trip Distance (km)", data[busline][15]  ))
     number_of_return_trip_per_day = int(route[1].text_input("Number of return trip per day", data[busline][16] ))
     average_passengers_12m = int(route[2].text_input("Average Passenger per trip in 12m bus", data[busline][17]  ))
     average_passengers_18m = int(route[3].text_input("Average Passenger per trip in 18m bus", data[busline][18]  ))
+    passenger_weight = int(route[4].text_input("Average Passenger Mass", data[busline][19]))
     
     submitted = st.form_submit_button('Update')
     
@@ -133,6 +134,12 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
 
     return lca.score
 do_lca.counter = 0 
+
+#variables 
+
+drivingmass18 = average_passengers_18m * passenger_weight
+drivingmass12 = average_passengers_12m * passenger_weight
+
 lca = st.button('Calculate LCA')        
 if lca:         
     
@@ -194,6 +201,15 @@ if lca:
         maintenance = [x for x in usephase.technosphere() if 'maintenance, bus' in x['name']][0]
         maintenance['amount'] = 1/personkm
         maintenance.save()
+        
+        # set also the road share 
+        drivingmass = avg_passenger * passenger_weight 
+        
+        road = [x for x in usephase.technosphere() if 'market for road' == x['name']][0]
+        road['amount'] = drivingmass * 0.00000053
+        road.save()
+        
+        
     
     def setup_diesel_bus_usephase(fuel_rate, annual_distance, lifetime, bussize):
         lifetime_diesel_liter = (fuel_rate/100) * annual_distance * lifetime
@@ -231,8 +247,10 @@ if lca:
         
         if bussize == 18: 
             avgpassenger = average_passengers_18m
+            drivingmass = drivingmass18
         else: 
             avgpassenger = average_passengers_12m 
+            drivingmass = drivingmass12
         
         personkm = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 * avgpassenger
         
@@ -270,6 +288,14 @@ if lca:
         
         for name, amount in metal.items(): 
             heavy_metal(name, amount)
+        
+        # other emissions 
+        # road share 
+        road = [x for x in usephasebus.technosphere() if 'market for road' == x['name']][0]
+        road['amount'] = drivingmass * 0.00000053
+        road.save()
+        
+        
             
         
     
