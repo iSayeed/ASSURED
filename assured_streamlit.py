@@ -480,9 +480,34 @@ if lca:
     bus_dict = { 'Buses': labels, 'Production + EoL': production_phase, 'Use Phase': use_phase }
     df = pd.DataFrame(bus_dict)
     df.set_index('Buses')
+    df['Co2 per km '] = df['Production + EoL'] + df['Use Phase']
+    
+    # update the co2 per km 
+    
+    # make a column if the bus is 12 or not 
+    df['12m?'] = df['Buses'].str.contains('12m')
+    #make a column of total sum of co2 
+    df['co2'] = df['Production + EoL'] + df['Use Phase']
+    
+    #now co2 per km column 
+    
+    new_co2 = []
+
+    for co2, size in zip(df['co2'], df['12m?']): 
+        if size == True : 
+            new_co2.append(co2/average_passengers_12m)
+        else: 
+            new_co2.append(co2/average_passengers_18m)
+    st.write([average_passengers_12m, average_passengers_18m])
+    st.write(new_co2)
+            
+    df['co2 per km'] = new_co2
+    
+    
     
     
     st.write(df)
+    df.to_csv(busline + ' single bus.csv')
     #plotting of total fleet
     # before that, let's make the charger share to zero 
     if n18m_bus != 0: 
@@ -554,7 +579,103 @@ if lca:
     df2.set_index('Fleets')
     
     st.write(df2)
+    
 
+    # if n18m_bus != 0: 
+        
+    
+    # assured12use =do_lca(usephase12m)*1000
+    # diesel12use =do_lca(use12mdiesel)*1000
+    st.write('per km calculation')
+# per km calculation 
+    nox = ('CML 2001 (obsolete)', 'eutrophication potential', 'average European')
+    pm10 = ('ReCiPe Midpoint (E) V1.13 no LT', 'particulate matter formation', 'PMFP')
+    if n18m_bus != 0:
+        perkm18m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 
+        perkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 
+        pkmavg = np.mean([perkm18m, perkm12m])
+        total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method =nox  )/perkm18m) 
+        + n12m_bus*(do_lca(bus12mproduction, method = nox)/perkm12m)
+        
+        # diesel18use = do_lca(use18mdiesel, method = nox)
+        diesel18use = do_lca(use18mdiesel, method = nox) * average_passengers_18m # to convert from personkm to just km
+        assured18use =do_lca(usephase18m, method = nox) * average_passengers_18m
+        assured12use =do_lca(usephase12m, method = nox) * average_passengers_12m
+        diesel12use =do_lca(use12mdiesel, method = nox) * average_passengers_12m
+        
+        total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+        charger_impact = (fc*do_lca(fu_fc, method = nox)/pkmavg) + (oc*do_lca(fu_oc, method = nox)/pkmavg)
+            
+        
+        perkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 
+        perkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 
+        
+        diesel12production =(do_lca(bus12mdieselproduction, method = nox)/perkmdiesel12)
+        diesel18production =(do_lca(bus18mdieselproduction, method = nox)/perkmdiesel18)
+        
+        total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+        total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+        
+        st.write('diesel technology')
+        st.write([total_diesel_bus_impact, total_use_impact_diesel ])
+        
+        labels = ['Diesel Technology', 'ASSURED Technology']
+        production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+        charger =np.array([0, charger_impact])
+        use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        plt.style.use('seaborn')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+               label='Use phase')
+        
+        ax.set_ylabel('g CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig)  
+    
+    else: 
+        perkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365
+        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = nox)/perkm12m)
+        assured12use =do_lca(usephase12m, method = nox) * average_passengers_12m
+        total_use_impact_assured =  assured12use* n12m_bus
+        charger_impact = (fc*do_lca(fu_fc, method = nox)/perkm12m) + (oc*do_lca(fu_oc, method = nox)/perkm12m)
+            
+        
+        perkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365
+        diesel12production =(do_lca(bus12mdieselproduction, method = nox)/perkmdiesel12)
+        diesel12use =do_lca(use12mdiesel, method = nox) * average_passengers_12m
+        
+        total_diesel_bus_impact = diesel12production*n12m_bus 
+        total_use_impact_diesel = diesel12use* n12m_bus
+        
+        labels = ['Diesel Technology', 'ASSURED Technology']
+        production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+        charger =np.array([0, charger_impact])
+        use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        plt.style.use('seaborn')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+        ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+               label='Use phase')
+        
+        ax.set_ylabel('kg CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig) 
+    
+    fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
+    df2 = pd.DataFrame(fleet_dict)
+    df2.set_index('Fleets')
+    
+    st.write(df2)
+    df2.to_csv(busline + ' fleet level.csv')
 # #future scenerio 
 #     #set the new usephase activity 
 #     usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
@@ -795,8 +916,8 @@ if lca:
     # st.write(methods[0]) 
     # endpoint_plot(methods[0])
     
-    for m in methods: 
-        endpoint_plot(m)
+    # for m in methods: 
+    #     endpoint_plot(m)
     
     st.write('number of lca calculation')
     st.write(do_lca.counter) 
@@ -928,9 +1049,9 @@ if lca:
             ax.legend()
             st.pyplot(fig)
     
-    st.write('100% stacked ')
-    for m in methods: 
-        endpoint_plot_stacked(m)        
+    # st.write('100% stacked ')
+    # for m in methods: 
+    #     endpoint_plot_stacked(m)        
     
     #check other midpoints 
     st.write('midpoints')
@@ -938,5 +1059,5 @@ if lca:
                                     and 'midpoint (h)' in str(x).lower()
                                     and 'obsolete' not in str(x).lower()
                                     and 'LT' not in str(x)]
-    for m in midpoints: 
-        endpoint_plot(m,plotnum =1)
+    # for m in midpoints: 
+    #     endpoint_plot(m,plotnum =1)
