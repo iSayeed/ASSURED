@@ -508,6 +508,88 @@ if lca:
     
     st.write(df)
     df.to_csv(busline + ' single bus.csv')
+
+# for other nox and pm 
+    nox = ('CML 2001 (obsolete)', 'eutrophication potential', 'average European')
+    pm10 = ('ReCiPe Midpoint (E) V1.13 no LT', 'particulate matter formation', 'PMFP')
+    if n18m_bus != 0: 
+        diesel18production =(do_lca(bus18mdieselproduction, method = pm10)/personkmdiesel18)
+        diesel18use = do_lca(use18mdiesel, method = pm10)
+        assured18production =(do_lca(bus18mproduction, method = pm10)/personkm18m)
+        assured18use =do_lca(usephase18m, method = pm10)
+    
+    diesel12production =(do_lca(bus12mdieselproduction, method = pm10)/personkmdiesel12)
+    diesel12use =do_lca(use12mdiesel, method = pm10)
+    assured12production=(do_lca(bus12mproduction, method = pm10)/personkm12m)
+    assured12use =do_lca(usephase12m, method = pm10)
+    
+    if n18m_bus != 0: 
+        labels = ['Diesel Bus 12m', 'Diesel Bus 18m', 'ASSURED Bus 12m', 'ASSURED Bus 18m']
+        production_phase = [diesel12production,diesel18production,assured12production,assured18production ]
+        use_phase = [diesel12use,diesel18use,assured12use,assured18use]
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        plt.style.use('seaborn')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, use_phase, width, bottom=production_phase,
+               label='Use phase')
+        
+        ax.set_ylabel('g CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig)
+    else: 
+        labels = ['Diesel Bus 12m',  'ASSURED Bus 12m']
+        production_phase = [diesel12production,assured12production]
+        use_phase = [diesel12use,assured12use]
+        width = 0.35       # the width of the bars: can also be len(x) sequence
+        
+        fig, ax = plt.subplots()
+        plt.style.use('seaborn')
+        ax.bar(labels, production_phase, width, label='Production + EoL')
+        ax.bar(labels, use_phase, width, bottom=production_phase,
+               label='Use phase')
+        
+        ax.set_ylabel('g CO2-eq /pkm')
+        ax.legend()
+        
+        st.pyplot(fig)
+    
+    #make dataframe 
+    
+    bus_dict = { 'Buses': labels, 'Production + EoL': production_phase, 'Use Phase': use_phase }
+    df = pd.DataFrame(bus_dict)
+    df.set_index('Buses')
+    df['Co2 per km '] = df['Production + EoL'] + df['Use Phase']
+    
+    # update the co2 per km 
+    
+    # make a column if the bus is 12 or not 
+    df['12m?'] = df['Buses'].str.contains('12m')
+    #make a column of total sum of co2 
+    df['co2'] = df['Production + EoL'] + df['Use Phase']
+    
+    #now co2 per km column 
+    
+    new_co2 = []
+
+    for co2, size in zip(df['co2'], df['12m?']): 
+        if size == True : 
+            new_co2.append(co2/average_passengers_12m)
+        else: 
+            new_co2.append(co2/average_passengers_18m)
+    st.write([average_passengers_12m, average_passengers_18m])
+    st.write(new_co2)
+            
+    df['co2 per km'] = new_co2
+    
+    
+    
+    st.write('Other emissions')
+    st.write(df)
+    df.to_csv(busline + ' single bus other emissions.csv')    
+    
     #plotting of total fleet
     # before that, let's make the charger share to zero 
     if n18m_bus != 0: 
