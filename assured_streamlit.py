@@ -495,9 +495,9 @@ if lca:
 
     for co2, size in zip(df['co2'], df['12m?']): 
         if size == True : 
-            new_co2.append(co2/average_passengers_12m)
+            new_co2.append(co2*average_passengers_12m)
         else: 
-            new_co2.append(co2/average_passengers_18m)
+            new_co2.append(co2*average_passengers_18m)
     st.write([average_passengers_12m, average_passengers_18m])
     st.write(new_co2)
             
@@ -535,7 +535,7 @@ if lca:
         ax.bar(labels, use_phase, width, bottom=production_phase,
                label='Use phase')
         
-        ax.set_ylabel('g CO2-eq /pkm')
+        ax.set_ylabel('g PMFP-eq /pkm')
         ax.legend()
         
         st.pyplot(fig)
@@ -551,7 +551,7 @@ if lca:
         ax.bar(labels, use_phase, width, bottom=production_phase,
                label='Use phase')
         
-        ax.set_ylabel('g CO2-eq /pkm')
+        ax.set_ylabel('g PMFP-eq /pkm')
         ax.legend()
         
         st.pyplot(fig)
@@ -561,28 +561,28 @@ if lca:
     bus_dict = { 'Buses': labels, 'Production + EoL': production_phase, 'Use Phase': use_phase }
     df = pd.DataFrame(bus_dict)
     df.set_index('Buses')
-    df['Co2 per km '] = df['Production + EoL'] + df['Use Phase']
+    df['PMFP per km '] = df['Production + EoL'] + df['Use Phase']
     
     # update the co2 per km 
     
     # make a column if the bus is 12 or not 
     df['12m?'] = df['Buses'].str.contains('12m')
-    #make a column of total sum of co2 
-    df['co2'] = df['Production + EoL'] + df['Use Phase']
+    #make a column of total sum of pm 
+    df['pm'] = df['Production + EoL'] + df['Use Phase']
     
     #now co2 per km column 
     
-    new_co2 = []
+    new_pm = []
 
-    for co2, size in zip(df['co2'], df['12m?']): 
+    for pm, size in zip(df['pm'], df['12m?']): 
         if size == True : 
-            new_co2.append(co2/average_passengers_12m)
+            new_pm.append(pm*average_passengers_12m)
         else: 
-            new_co2.append(co2/average_passengers_18m)
+            new_pm.append(pm*average_passengers_18m)
     st.write([average_passengers_12m, average_passengers_18m])
-    st.write(new_co2)
+    st.write(new_pm)
             
-    df['co2 per km'] = new_co2
+    df['pm per km'] = new_pm
     
     
     
@@ -590,7 +590,7 @@ if lca:
     st.write(df)
     df.to_csv(busline + ' single bus other emissions.csv')    
     
-    #plotting of total fleet
+#plotting of total fleet of CO2 
     # before that, let's make the charger share to zero 
     if n18m_bus != 0: 
         set_charger_share_usephase(usephase18m,personkm18m, 0)
@@ -601,12 +601,15 @@ if lca:
     if n18m_bus != 0:
         pkmavg = np.mean([personkm18m, personkm12m])
         total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
-        total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+        #total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+        total_use_impact_assured = do_lca(usephase18m)*1000 + do_lca(usephase12m)*1000
         charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
             
         
-        total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
-        total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+        total_diesel_bus_impact = (do_lca(bus12mdieselproduction)/personkmdiesel12)*1000*n12m_bus + \
+                                  (do_lca(bus18mdieselproduction)/personkmdiesel18)*1000*n18m_bus
+        total_use_impact_diesel = do_lca(use18mdiesel)*1000*n18m_bus + \
+                                  do_lca(use12mdiesel)*1000*n12m_bus
         
         st.write('diesel technology')
         st.write([total_diesel_bus_impact, total_use_impact_diesel ])
@@ -679,7 +682,7 @@ if lca:
         total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method =nox  )/perkm18m) 
         + n12m_bus*(do_lca(bus12mproduction, method = nox)/perkm12m)
         
-        # diesel18use = do_lca(use18mdiesel, method = nox)
+        # use phases are already in person km unit
         diesel18use = do_lca(use18mdiesel, method = nox) * average_passengers_18m # to convert from personkm to just km
         assured18use =do_lca(usephase18m, method = nox) * average_passengers_18m
         assured12use =do_lca(usephase12m, method = nox) * average_passengers_12m
@@ -714,7 +717,7 @@ if lca:
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                label='Use phase')
         
-        ax.set_ylabel('g CO2-eq /pkm')
+        ax.set_ylabel('nox-eq /per km')
         ax.legend()
         
         st.pyplot(fig)  
@@ -747,7 +750,7 @@ if lca:
         ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                label='Use phase')
         
-        ax.set_ylabel('kg CO2-eq /pkm')
+        ax.set_ylabel('nox-eq /per km')
         ax.legend()
         
         st.pyplot(fig) 
@@ -952,7 +955,7 @@ if lca:
             
             ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
-            plt.savefig(fname = busline + ' ' + method[plotnum] )
+            #plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig) 
         
         else: 
@@ -1141,5 +1144,7 @@ if lca:
                                     and 'midpoint (h)' in str(x).lower()
                                     and 'obsolete' not in str(x).lower()
                                     and 'LT' not in str(x)]
-    # for m in midpoints: 
-    #     endpoint_plot(m,plotnum =1)
+    endpoints = [x for x in bw.methods if '2016' in str(x) and 'ReCiPe' in str(x) 
+                                                 and 'DALY' in bw.methods.get(x).get('unit') and 'Hierarchist' in str(x)]
+    for m in endpoints: 
+        endpoint_plot(m,plotnum =4)
