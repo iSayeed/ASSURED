@@ -131,3 +131,7 @@ dmypy.json
 *.png
 *.csv
 *.ipynb
+
+Barcelona H16 single bus.csv
+Barcelona L33 single bus.csv
+
