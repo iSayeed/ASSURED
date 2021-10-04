@@ -589,7 +589,99 @@ if lca:
     st.write('Other emissions')
     st.write(df)
     df.to_csv(busline + ' single bus other emissions.csv')    
+# for other nox and pm function 
+    nox = ('CML 2001 (obsolete)', 'eutrophication potential', 'average European')
+    pm10 = ('ReCiPe Midpoint (E) V1.13 no LT', 'particulate matter formation', 'PMFP')
+    co2 = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100')
+    methods_single = [nox, pm10, co2]
+    def perkm_single(method):
+        if n18m_bus != 0: 
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            diesel18use = do_lca(use18mdiesel, method = method)
+            assured18production =(do_lca(bus18mproduction, method = method)/personkm18m)
+            assured18use =do_lca(usephase18m, method = method)
+        
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        diesel12use =do_lca(use12mdiesel, method = method)
+        assured12production=(do_lca(bus12mproduction, method = method)/personkm12m)
+        assured12use =do_lca(usephase12m, method = method)
+        
+        if n18m_bus != 0: 
+            labels = ['Diesel Bus 12m', 'Diesel Bus 18m', 'ASSURED Bus 12m', 'ASSURED Bus 18m']
+            production_phase = [diesel12production,diesel18production,assured12production,assured18production ]
+            use_phase = [diesel12use,diesel18use,assured12use,assured18use]
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            # fig, ax = plt.subplots()
+            # plt.style.use('seaborn')
+            # ax.bar(labels, production_phase, width, label='Production + EoL')
+            # ax.bar(labels, use_phase, width, bottom=production_phase,
+            #        label='Use phase')
+            
+            # ax.set_ylabel('g PMFP-eq /pkm')
+            # ax.legend()
+            
+            # st.pyplot(fig)
+        else: 
+            labels = ['Diesel Bus 12m',  'ASSURED Bus 12m']
+            production_phase = [diesel12production,assured12production]
+            use_phase = [diesel12use,assured12use]
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            # fig, ax = plt.subplots()
+            # plt.style.use('seaborn')
+            # ax.bar(labels, production_phase, width, label='Production + EoL')
+            # ax.bar(labels, use_phase, width, bottom=production_phase,
+            #        label='Use phase')
+            
+            # ax.set_ylabel('g PMFP-eq /pkm')
+            # ax.legend()
+            
+            # st.pyplot(fig)
+        
+        #make dataframe 
+        
+        bus_dict = { 'Buses': labels, 'Production + EoL': production_phase, 'Use Phase': use_phase }
+        df = pd.DataFrame(bus_dict)
+        df.set_index('Buses')
+        df[method[1]] = df['Production + EoL'] + df['Use Phase']
+        
+        # update the co2 per km 
+        
+        # make a column if the bus is 12 or not 
+        df['12m?'] = df['Buses'].str.contains('12m')
+        #make a column of total sum of pm 
+        df['sum'] = df['Production + EoL'] + df['Use Phase']
+        
+        #now co2 per km column 
+        
+        new_pm = []
     
+        for pm, size in zip(df['sum'], df['12m?']): 
+            if size == True : 
+                new_pm.append(pm*average_passengers_12m)
+            else: 
+                new_pm.append(pm*average_passengers_18m)
+        # st.write([average_passengers_12m, average_passengers_18m])
+        # st.write(new_pm)
+                
+        df[method[1] +' per km'] = new_pm
+        
+        
+        
+        # st.write('Other emissions')
+        # st.write(df)
+        # df.to_csv(busline + ' single bus other emissions.csv')   
+        return df 
+    
+    perkm = []
+    for m in methods_single: 
+        perkm.append(perkm_single(m))
+    pkmsingle = pd.concat(perkm, axis = 0)
+    st.title('pkm single')
+    st.write(pkmsingle)
+    pkmsingle.to_csv(busline + ' single bus other emission.csv')
+        
 #plotting of total fleet of CO2 
     # before that, let's make the charger share to zero 
     if n18m_bus != 0: 
@@ -767,7 +859,7 @@ if lca:
     pm10 = ('ReCiPe Midpoint (E) V1.13 no LT', 'particulate matter formation', 'PMFP')
     co2 = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100')
     perkm_methods = [nox, pm10, co2]
-    def perkm(method): 
+    def perkm_fleet(method): 
 
         if n18m_bus != 0:
             perkm18m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 
@@ -859,9 +951,9 @@ if lca:
 # calculate all emissions as once 
     perkmdf =[]
     for m in perkm_methods: 
-        perkmdf.append(perkm(m))
+        perkmdf.append(perkm_fleet(m))
     pkmdf = pd.concat(perkmdf, axis = 0)
-    pkmdf.to_csv(busline + ' allemissions.csv')
+    pkmdf.to_csv(busline + ' allemissions single bus.csv')
     
 # #future scenerio 
 #     #set the new usephase activity 
