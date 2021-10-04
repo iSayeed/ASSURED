@@ -683,7 +683,7 @@ if lca:
         + n12m_bus*(do_lca(bus12mproduction, method = nox)/perkm12m)
         
         # use phases are already in person km unit
-        diesel18use = do_lca(use18mdiesel, method = nox) * average_passengers_18m # to convert from personkm to just km
+        diesel18use = do_lca(use18mdiesel, method = nox)* average_passengers_18m # to convert from personkm to just km
         assured18use =do_lca(usephase18m, method = nox) * average_passengers_18m
         assured12use =do_lca(usephase12m, method = nox) * average_passengers_12m
         diesel12use =do_lca(use12mdiesel, method = nox) * average_passengers_12m
@@ -761,6 +761,108 @@ if lca:
     
     st.write(df2)
     df2.to_csv(busline + ' fleet level.csv')
+
+# per km calculation function
+    nox = ('CML 2001 (obsolete)', 'eutrophication potential', 'average European')
+    pm10 = ('ReCiPe Midpoint (E) V1.13 no LT', 'particulate matter formation', 'PMFP')
+    co2 = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100')
+    perkm_methods = [nox, pm10, co2]
+    def perkm(method): 
+
+        if n18m_bus != 0:
+            perkm18m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 
+            perkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365 
+            pkmavg = np.mean([perkm18m, perkm12m])
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method =method  )/perkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)/perkm12m)
+            
+            # use phases are already in person km unit
+            diesel18use = do_lca(use18mdiesel, method = method)* average_passengers_18m # to convert from personkm to just km
+            assured18use =do_lca(usephase18m, method = method) * average_passengers_18m
+            assured12use =do_lca(usephase12m, method = method) * average_passengers_12m
+            diesel12use =do_lca(use12mdiesel, method = method) * average_passengers_12m
+            
+            total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg) + (oc*do_lca(fu_oc, method = method)/pkmavg)
+                
+            
+            perkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 
+            perkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 
+            
+            diesel12production =(do_lca(bus12mdieselproduction, method = method)/perkmdiesel12)
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)/perkmdiesel18)
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+            total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+            
+            # st.write('diesel technology')
+            # st.write([total_diesel_bus_impact, total_use_impact_diesel ])
+            
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+            charger =np.array([0, charger_impact])
+            use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            # fig, ax = plt.subplots()
+            # plt.style.use('seaborn')
+            # ax.bar(labels, production_phase, width, label='Production + EoL')
+            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+            #        label='Use phase')
+            
+            # ax.set_ylabel('nox-eq /per km')
+            # ax.legend()
+            
+            # st.pyplot(fig)  
+        
+        else: 
+            perkm12m = lifetime* return_trip_distance * number_of_return_trip_per_day * 365
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/perkm12m)
+            assured12use =do_lca(usephase12m, method = method) * average_passengers_12m
+            total_use_impact_assured =  assured12use* n12m_bus
+            charger_impact = (fc*do_lca(fu_fc, method = method)/perkm12m) + (oc*do_lca(fu_oc, method = method)/perkm12m)
+                
+            
+            perkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365
+            diesel12production =(do_lca(bus12mdieselproduction, method = method)/perkmdiesel12)
+            diesel12use =do_lca(use12mdiesel, method = method) * average_passengers_12m
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus 
+            total_use_impact_diesel = diesel12use* n12m_bus
+            
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+            charger =np.array([0, charger_impact])
+            use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            # fig, ax = plt.subplots()
+            # plt.style.use('seaborn')
+            # ax.bar(labels, production_phase, width, label='Production + EoL')
+            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+            #        label='Use phase')
+            
+            # ax.set_ylabel(method[1] +'/per km')
+            # ax.legend()
+            
+            # st.pyplot(fig) 
+        
+        fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
+        df2 = pd.DataFrame(fleet_dict)
+        df2.set_index('Fleets')
+        
+        # st.write(df2)
+        #df2.to_csv(busline + ' fleet level.csv')
+        return df2
+# calculate all emissions as once 
+    perkmdf =[]
+    for m in perkm_methods: 
+        perkmdf.append(perkm(m))
+    pkmdf = pd.concat(perkmdf, axis = 0)
+    pkmdf.to_csv(busline + ' allemissions.csv')
+    
 # #future scenerio 
 #     #set the new usephase activity 
 #     usephase18m = [x for x in busdb if 'busEnergyMix' in x['name'] and '18m' in x['name']][0]
