@@ -88,6 +88,12 @@ with st.form(key = 'Bus Info') :
     dec18 = int(dec[0].text_input("Energy demand per day of a 18m bus - December (kWh)", data[busline][13]  ))
     dec12 = int(dec[1].text_input("Energy demand per day of a 12m bus - December (kWh)", data[busline][14]  ))
     
+    st.subheader('Diesel bus fuel consumption')
+    fuel_rate = st.beta_columns(2)
+    
+    diesel12fuel_consumption = float(fuel_rate[0].text_input('Fuel consumption rate of 12m bus (L/100 km)', 40))
+    diesel18fuel_consumption = float(fuel_rate[1].text_input('Fuel consumption rate of 18m bus (L/100 km)', 70))
+    
     st.subheader('Route Details')
     route = st.beta_columns(5)
     
@@ -106,7 +112,7 @@ if n18m_bus !=0:
 if n12m_bus !=0:
     st.sidebar.image(('./12m bus.png'), caption = str(n12m_bus) + ' units of' +' 12m Buses', width =250)
 
-st.sidebar.write("Route distances")
+st.sidebar.write("Route distance")
 st.sidebar.image(('./route.png'), width = 100)
 # st.sidebar.image(('./depot charger.png'), width = 100)
 st.sidebar.write('Single route -- ' + str(return_trip_distance/2) + ' km')
@@ -332,9 +338,9 @@ if lca:
 
     
     # Set up the diesel bus 
-    setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
+    setup_diesel_bus_usephase(diesel18fuel_consumption,annual_distance, 12, 18 )
     
-    setup_diesel_bus_usephase(40,annual_distance, 12, 13)
+    setup_diesel_bus_usephase(diesel12fuel_consumption,annual_distance, 12, 13)
     
     
     
@@ -466,17 +472,17 @@ if lca:
     
     if n18m_bus != 0:
         pkmavg = np.mean([personkm18m, personkm12m])
-        total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_imact_bus = n18m_bus*assured18production + n12m_bus*assured12production
         #total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
-        total_use_impact_assured = do_lca(usephase18m)*1000 + do_lca(usephase12m)*1000
+        total_use_impact_assured = n18m_bus*assured18use + n12m_bus*assured12use
         charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
             
         
-        total_diesel_bus_impact = (do_lca(bus12mdieselproduction)/personkmdiesel12)*1000*n12m_bus + \
-                                  (do_lca(bus18mdieselproduction)/personkmdiesel18)*1000*n18m_bus
+        total_diesel_bus_impact = diesel12production*n12m_bus + \
+                                  diesel18production*n18m_bus
         
-        total_use_impact_diesel = do_lca(use18mdiesel)*1000*n18m_bus + \
-                                  do_lca(use12mdiesel)*1000*n12m_bus
+        total_use_impact_diesel = diesel18use*n18m_bus + \
+                                  diesel12use*n12m_bus
         #
         # absolute numbers 
         # st.write('diesel technology')
