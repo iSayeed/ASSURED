@@ -16,35 +16,9 @@ import seaborn as sns
 import brightway2 as bw
 
 st.title("ASSURED project")
-#st.sidebar.title("Common parameters of Buses")
-
-# ( battery, electricity, diesel_price=0)
 
 
-# st.sidebar.subheader("Common prices")
-# battery_price = st.sidebar.number_input("Battery Price kWh/km",  min_value = 30, max_value = 500, value = 350, step = 5)
-# #electricity_price = float(st.sidebar.text_input("Electricity Price euro/kWh", 0.13))
-# electricity_price = st.sidebar.number_input('Electricity Price euro/kWh', min_value = 0.05, max_value = 2.0, value = 0.13, step = 0.01)
-# #diesel_price = float(st.sidebar.text_input("Diesel Price euro/L", 1.49))
-# diesel_price =st.sidebar.number_input("Diesel Price euro/L", value =1.57, min_value = 0.01, max_value = 3.0, step= 0.01)
-# t.price = t.Price(battery_price, electricity_price, diesel_price)
-
-
-# st.sidebar.subheader("Discount Rate")
-# #dr = float(st.sidebar.text_input("Discount rate", -0.0183))
-
-# dr2 = st.sidebar.slider('Discount rate in % ', min_value=-3.0, max_value= 2.0, step= 0.003, value = -0.32)
-
-# st.sidebar.write(dr2/100)
-
-
-#st.sidebar.write(t.npv.discount_rate)
-
-# st.sidebar.subheader("Route Details")
-#( route_length, return_trip_perday, drive_time_route, active_days_year)
-#route = t.Route(17, 5, 50, 365)
-
-st.subheader("Bus Line Information")
+st.subheader("Bus Line information ")
 
 
 
@@ -54,15 +28,27 @@ data = {'Barcelona H16': [8,5,15,1,2,600,100,455,270,570,313,588,306, 450,273,23
         'Barcelona L33': [8,8,15,1,2,600,100,392,245,468,278,463,274, 395,247,19.4,8,10,20,75],
         'Gothenburg R55': [0,8,15,2,1,290,150,0,421,0,388,0,388, 0,455,15.2,13,10,20,75],
         'Osnabrück L33': [2,2,15,1,1,600,100,625,436,625,438,614,437, 657,444,12.2,13,10,20,75]}
-busline = st.radio('Select bus line', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Osnabrück L33'])
+st.sidebar.subheader("Bus Route")
+busline = st.sidebar.radio('', ['Barcelona H16', 'Barcelona L33', 'Gothenburg R55', 'Osnabrück L33'])
 
 country = {'Barcelona H16': 'ES', 
         'Barcelona L33': 'ES',
         'Gothenburg R55': 'SE',
         'Osnabrück L33': 'DE'}
-st.write(busline)
+# st.sidebar.write(busline)
 # button = st.button('Calculate')
+st.sidebar.subheader(busline + ' bus line')
+st.sidebar.write("Number of buses:")
+if data[busline][0] !=0: 
+    st.sidebar.image(('./18m bus.png'), caption = str(data[busline][0]) + ' units of' +' 18m Buses', width =300)
+st.sidebar.image(('./12m bus.png'), caption = str(data[busline][1]) + ' units of' +' 12m Buses', width =250)
 
+st.sidebar.write("Route distances")
+st.sidebar.image(('./route.png'), width = 100)
+# st.sidebar.image(('./depot charger.png'), width = 100)
+st.sidebar.write('Single route -- ' + str(data[busline][15]/2) + ' km')
+st.sidebar.write('Return trip per day -- ' + str(data[busline][16]) + ' km')
+st.sidebar.write('Daily travel by a single bus -- ' + str(data[busline][15]*data[busline][16]) + ' km')
 # if button: 
 with st.form(key = 'Bus Info') : 
     
@@ -146,8 +132,8 @@ if lca:
     yearly_consumption_18m =( march18 + june18 + sept18 + dec18) *3*30
     yearly_consumption_12m =( march12 + june12 + sept12 + dec12) *3*30
     
-    st.write(yearly_consumption_18m)
-    st.write(yearly_consumption_12m)
+    # st.write(yearly_consumption_18m)
+    # st.write(yearly_consumption_12m)
         
     annual_distance = return_trip_distance * number_of_return_trip_per_day * 365
     
@@ -340,35 +326,13 @@ if lca:
                                                                                         and 'panto' not in x['name']
                                                                                         and '200' not in x['name']]
     
-    # st.write('18m bus')
-    # st.write((do_lca(bus18mproduction)/personkm18m)*1000)
-    # st.write(do_lca(usephase18m)*1000)
+
     
-    st.write('18m diesel')
+    # Set up the diesel bus 
     setup_diesel_bus_usephase(70,annual_distance, 12, 18 )
     
-    # st.write((do_lca(bus18mdieselproduction)/personkmdiesel18)*1000)
-    # st.write(do_lca(use18mdiesel)*1000)
-    # # for diesel 
-    
-    
-    # st.write('12m bus')
-    # st.write((do_lca(bus12mproduction)/personkm12m)*1000)
-    # st.write(do_lca(usephase12m)*1000)
-    
-    st.write('12m bus diesel')
     setup_diesel_bus_usephase(40,annual_distance, 12, 13)
     
-    # st.write((do_lca(bus12mdieselproduction)/personkmdiesel12)*1000)
-    # st.write(do_lca(use12mdiesel)*1000)
-    
-    #for dieel 
-    
-    
-    # '''
-    # ['use phase passenger bus, diesel, 13m ASSURED' (passenger-kilometer, RER, None),
-    #  'use phase, passenger bus, diesel, 18m ASSURED' (passenger-kilometer, RER, None)]
-    # '''
     
     
     #Fleet lca 
@@ -402,26 +366,6 @@ if lca:
     else: 
         fc_charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
     
-    # st.write('total bus impact')
-    # st.write(total_imact_bus)
-    # st.write('total charger impact')
-    # st.write(fc_charger_impact)
-    # st.write('total use phase impact')
-    # total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
-    # st.write(total_use_impact_assured)
-    
-    # st.write('now for diesel')
-    # st.write('total diesel bus impact')
-    # total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
-    # st.write(total_diesel_bus_impact)
-    
-    # st.write('total use phase impact')
-    # total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
-    # st.write(total_use_impact_diesel)
-    
-    # st.write(do_lca(fu_fc))
-    # st.write(do_lca(fu_oc))
-    # st.write(do_lca(bus18mproduction))
     
     def update_names_in_exchanges(activity): 
         for x in activity.technosphere(): 
@@ -1277,18 +1221,7 @@ if lca:
             ax.legend()
             
             
-            
-            
-            
-            # plt.style.use('seaborn')
-            # ax.bar(labels, production_phase, width, label='Production + EoL')
-            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
-            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
-            #        label='Use phase')
-            
-            # ax.set_ylabel(method[2] + ' ' + bw.methods.get(method).get('unit'))
-            # ax.legend()
-            # plt.savefig(fname = busline + ' ' + method[2] )
+
             st.pyplot(fig) 
         
         else: 
@@ -1328,9 +1261,7 @@ if lca:
             ax.legend()
             st.pyplot(fig)
     
-    # st.write('100% stacked ')
-    # for m in methods: 
-    #     endpoint_plot_stacked(m)        
+    
     
     #check other midpoints 
     st.write('midpoints')
