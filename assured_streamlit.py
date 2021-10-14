@@ -1275,6 +1275,115 @@ if lca:
             st.pyplot(fig)
     
     
+    # with all midpoints         
+    all_midpoint_recipe = [('ReCiPe Midpoint (H) V1.13', 'freshwater ecotoxicity', 'FETPinf'),
+                             ('ReCiPe Midpoint (H) V1.13', 'human toxicity', 'HTPinf'),
+                             ('ReCiPe Midpoint (H) V1.13', 'marine ecotoxicity', 'METPinf'),
+                             ('ReCiPe Midpoint (H) V1.13', 'terrestrial ecotoxicity', 'TETPinf'),
+                             ('ReCiPe Midpoint (H) V1.13', 'metal depletion', 'MDP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'agricultural land occupation', 'ALOP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'),
+                             ('ReCiPe Midpoint (H) V1.13', 'fossil depletion', 'FDP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'freshwater eutrophication', 'FEP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'ionising radiation', 'IRP_HE'),
+                             ('ReCiPe Midpoint (H) V1.13', 'marine eutrophication', 'MEP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'natural land transformation', 'NLTP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'ozone depletion', 'ODPinf'),
+                             ('ReCiPe Midpoint (H) V1.13', 'particulate matter formation', 'PMFP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'photochemical oxidant formation', 'POFP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'terrestrial acidification', 'TAP100'),
+                             ('ReCiPe Midpoint (H) V1.13', 'urban land occupation', 'ULOP'),
+                             ('ReCiPe Midpoint (H) V1.13', 'water depletion', 'WDP')]
+    # define multi lca function
+    def multi_lca(activity, methods = all_midpoint_recipe): 
+        
+        
+      inventory = [{activity.key:1}]  
+      bw.calculation_setups['production'] = {'inv':inventory, 'ia':  methods} 
+      lcaresults = bw.MultiLCA('production')  
+      
+      return lcaresults.results
+        
+  # #Fleet lca 
+  #   if n18m_bus != 0: 
+  #       personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
+  #       diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
+  #       assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
+    
+  #   personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
+  #   diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
+  #   assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+    
+    
+  #   if n18m_bus != 0: 
+  #       diesel18use = do_lca(use18mdiesel)*1000
+  #       assured18use =do_lca(usephase18m)*1000
+    
+  #   assured12use =do_lca(usephase12m)*1000
+  #   diesel12use =do_lca(use12mdiesel)*1000
+    
+  #   if n18m_bus != 0: 
+  #       total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+  #   else: 
+  #       total_imact_bus = n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+    
+  #   fu_fc = [x for x in fast_charger_activity if str(fc_power) in x['name']][0]
+  #   fu_oc = [x for x in overnight_charger_activity if str(oc_power) in x['name']][0]
+    
+  #   if n18m_bus != 0: 
+  #       fc_charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
+  #   else: 
+  #       fc_charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000    
+  
+        #   pkmavg = np.mean([personkm18m, personkm12m])
+        # total_imact_bus = n18m_bus*assured18production + n12m_bus*assured12production
+        # #total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+        # total_use_impact_assured = n18m_bus*assured18use + n12m_bus*assured12use
+        # charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
+        
+        
+    dieseltotal = (multi_lca(bus18mdieselproduction)/personkmdiesel18 + multi_lca(bus12mdieselproduction)/personkmdiesel12 +\
+                   multi_lca(use18mdiesel)+ multi_lca(use12mdiesel)) * 1000 
+        
+    pkmavg = np.mean([personkm18m, personkm12m])
+    assuredtotal = (multi_lca(bus18mproduction)/personkmdiesel18 + multi_lca(bus12mproduction)/personkmdiesel12 +\
+                   multi_lca(usephase18m)+ multi_lca(usephase12m) +\
+                       fc*multi_lca(fu_fc)/pkmavg + oc*multi_lca(fu_oc)/pkmavg) * 1000 
+    
+    # st.write(dieseltotal)
+    # st.write(assuredtotal)
+    
+    col_name = [x[1] for x in all_midpoint_recipe]
+    d  = pd.DataFrame(columns = col_name, index = ['Diesel Technology', 'ASSURED Technology'])
+    d.loc['Diesel Technology'] = dieseltotal
+    d.loc['ASSURED Technology'] = assuredtotal
+    
+    d1 = d.div(d.iloc[0])
+    d2 = d1.T 
+    
+    
+    
+    import plotly.graph_objects as go 
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x = col_name, 
+        y = d2['Diesel Technology'], 
+        name = 'Diesel Technology', 
+        marker_color = 'indianred'
+        
+        ))
+    
+    fig.add_trace(go.Bar(
+        x = col_name, 
+        y = d2['ASSURED Technology'], 
+        name = 'ASSURED Technology', 
+        marker_color = 'lightsalmon'   
+        
+        ))
+    fig.update_layout(barmode = 'group', xaxis_tickangle = 90)
+    
+    st.plotly_chart(fig)
     
     #check other midpoints 
     midpoints = [x for x in bw.methods if 'recipe' in str(x).lower()
@@ -1289,6 +1398,11 @@ if lca:
     st.write('Endpoints')
     for m in endpoints: 
         endpoint_plot(m,plotnum =4)
+        
+
+        
+
+
         
     st.write('number of lca calculation')
     st.write(do_lca.counter) 
