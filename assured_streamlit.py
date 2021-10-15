@@ -1341,6 +1341,115 @@ if lca:
         # total_use_impact_assured = n18m_bus*assured18use + n12m_bus*assured12use
         # charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
     
+        
+        
+    if n18m_bus != 0:   
+        dieseltotal = (multi_lca(bus18mdieselproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mdieselproduction)/personkmdiesel12)*n18m_bus +\
+                       multi_lca(use18mdiesel)*n18m_bus+ multi_lca(use12mdiesel)*n12m_bus 
+            
+        pkmavg = np.mean([personkm18m, personkm12m])
+        assuredtotal = (multi_lca(bus18mproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mproduction)/personkmdiesel12)*n18m_bus +\
+                       multi_lca(usephase18m)*n18m_bus+ multi_lca(usephase12m)*n12m_bus +\
+                           fc*multi_lca(fu_fc)/pkmavg + oc*multi_lca(fu_oc)/pkmavg
+        
+        # st.write(dieseltotal)
+        # st.write(assuredtotal)
+        
+        col_name = [x[1] for x in all_midpoint_recipe]
+        d  = pd.DataFrame(columns = col_name, index = ['Diesel Technology', 'ASSURED Technology'])
+        d.loc['Diesel Technology'] = dieseltotal
+        d.loc['ASSURED Technology'] = assuredtotal
+        
+        d1 = d.div(d.iloc[0])
+        d2 = d1.T 
+        
+        
+        
+        import plotly.graph_objects as go 
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x = col_name, 
+            y = d2['Diesel Technology'], 
+            name = 'Diesel Technology', 
+            marker_color = 'indianred'
+            
+            ))
+        
+        fig.add_trace(go.Bar(
+            x = col_name, 
+            y = d2['ASSURED Technology'], 
+            name = 'ASSURED Technology', 
+            marker_color = 'lightsalmon'   
+            
+            ))
+        fig.update_layout(barmode = 'group', xaxis_tickangle = 90)
+        fig.update_layout(
+            #title="Plot Title",
+            #xaxis_title="x Axis Title",
+            
+            yaxis_title="Relative results",
+           autosize = False, 
+                        width = 900, 
+                        height = 600,
+            
+        )          
+        
+        st.plotly_chart(fig)
+    else: 
+        dieseltotal = ( multi_lca(bus12mdieselproduction)/personkmdiesel12)*n12m_bus +\
+                        multi_lca(use12mdiesel)*n12m_bus
+            
+        # pkmavg = np.mean([personkm18m, personkm12m])
+        assuredtotal = (multi_lca(bus12mproduction)/personkm12m)*n12m_bus +\
+                        multi_lca(usephase12m)*n12m_bus +\
+                           fc*multi_lca(fu_fc)/personkm12m + oc*multi_lca(fu_oc)/personkm12m  
+        
+        # st.write(dieseltotal)
+        # st.write(assuredtotal)
+        
+        col_name = [x[1] for x in all_midpoint_recipe]
+        d  = pd.DataFrame(columns = col_name, index = ['Diesel Technology', 'ASSURED Technology'])
+        d.loc['Diesel Technology'] = dieseltotal
+        d.loc['ASSURED Technology'] = assuredtotal
+        
+        d1 = d.div(d.iloc[0])
+        d2 = d1.T 
+        
+        
+        
+        import plotly.graph_objects as go 
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x = col_name, 
+            y = d2['Diesel Technology'], 
+            name = 'Diesel Technology', 
+            marker_color = 'indianred'
+            
+            ))
+        
+        fig.add_trace(go.Bar(
+            x = col_name, 
+            y = d2['ASSURED Technology'], 
+            name = 'ASSURED Technology', 
+            marker_color = 'lightsalmon'   
+            
+            ))
+        fig.update_layout(barmode = 'group', xaxis_tickangle = 90)
+        fig.update_layout(
+            #title="Plot Title",
+            #xaxis_title="x Axis Title",
+            
+            yaxis_title="Relative results",
+           autosize = False, 
+                        width = 900, 
+                        height = 600,
+            
+        )    
+        
+        st.plotly_chart(fig)
+
     #production phase 
     st.write('Relative results of Production and EoL phase')
     if n18m_bus != 0:   
@@ -1547,114 +1656,7 @@ if lca:
         )    
         
         st.plotly_chart(fig)
-        
-        
-    if n18m_bus != 0:   
-        dieseltotal = (multi_lca(bus18mdieselproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mdieselproduction)/personkmdiesel12)*n18m_bus +\
-                       multi_lca(use18mdiesel)*n18m_bus+ multi_lca(use12mdiesel)*n12m_bus 
-            
-        pkmavg = np.mean([personkm18m, personkm12m])
-        assuredtotal = (multi_lca(bus18mproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mproduction)/personkmdiesel12)*n18m_bus +\
-                       multi_lca(usephase18m)*n18m_bus+ multi_lca(usephase12m)*n12m_bus +\
-                           fc*multi_lca(fu_fc)/pkmavg + oc*multi_lca(fu_oc)/pkmavg
-        
-        # st.write(dieseltotal)
-        # st.write(assuredtotal)
-        
-        col_name = [x[1] for x in all_midpoint_recipe]
-        d  = pd.DataFrame(columns = col_name, index = ['Diesel Technology', 'ASSURED Technology'])
-        d.loc['Diesel Technology'] = dieseltotal
-        d.loc['ASSURED Technology'] = assuredtotal
-        
-        d1 = d.div(d.iloc[0])
-        d2 = d1.T 
-        
-        
-        
-        import plotly.graph_objects as go 
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x = col_name, 
-            y = d2['Diesel Technology'], 
-            name = 'Diesel Technology', 
-            marker_color = 'indianred'
-            
-            ))
-        
-        fig.add_trace(go.Bar(
-            x = col_name, 
-            y = d2['ASSURED Technology'], 
-            name = 'ASSURED Technology', 
-            marker_color = 'lightsalmon'   
-            
-            ))
-        fig.update_layout(barmode = 'group', xaxis_tickangle = 90)
-        fig.update_layout(
-            #title="Plot Title",
-            #xaxis_title="x Axis Title",
-            
-            yaxis_title="Relative results",
-           autosize = False, 
-                        width = 900, 
-                        height = 600,
-            
-        )          
-        
-        st.plotly_chart(fig)
-    else: 
-        dieseltotal = ( multi_lca(bus12mdieselproduction)/personkmdiesel12)*n12m_bus +\
-                        multi_lca(use12mdiesel)*n12m_bus
-            
-        # pkmavg = np.mean([personkm18m, personkm12m])
-        assuredtotal = (multi_lca(bus12mproduction)/personkm12m)*n12m_bus +\
-                        multi_lca(usephase12m)*n12m_bus +\
-                           fc*multi_lca(fu_fc)/personkm12m + oc*multi_lca(fu_oc)/personkm12m  
-        
-        # st.write(dieseltotal)
-        # st.write(assuredtotal)
-        
-        col_name = [x[1] for x in all_midpoint_recipe]
-        d  = pd.DataFrame(columns = col_name, index = ['Diesel Technology', 'ASSURED Technology'])
-        d.loc['Diesel Technology'] = dieseltotal
-        d.loc['ASSURED Technology'] = assuredtotal
-        
-        d1 = d.div(d.iloc[0])
-        d2 = d1.T 
-        
-        
-        
-        import plotly.graph_objects as go 
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x = col_name, 
-            y = d2['Diesel Technology'], 
-            name = 'Diesel Technology', 
-            marker_color = 'indianred'
-            
-            ))
-        
-        fig.add_trace(go.Bar(
-            x = col_name, 
-            y = d2['ASSURED Technology'], 
-            name = 'ASSURED Technology', 
-            marker_color = 'lightsalmon'   
-            
-            ))
-        fig.update_layout(barmode = 'group', xaxis_tickangle = 90)
-        fig.update_layout(
-            #title="Plot Title",
-            #xaxis_title="x Axis Title",
-            
-            yaxis_title="Relative results",
-           autosize = False, 
-                        width = 900, 
-                        height = 600,
-            
-        )    
-        
-        st.plotly_chart(fig)
+
     #check other midpoints 
     midpoints = [x for x in bw.methods if 'recipe' in str(x).lower()
                                     and 'midpoint (h)' in str(x).lower()
@@ -1665,12 +1667,17 @@ if lca:
     # for m in midpoints: 
     #     endpoint_plot(m,plotnum =2)
     
-    st.write('Endpoints')
-    for m in endpoints: 
-        endpoint_plot(m,plotnum =4)
+    # st.write('Endpoints')
+    # for m in endpoints: 
+    #     endpoint_plot(m,plotnum =4)
         
 
-        
+    endpoint_plot(('ReCiPe 2016',
+  '1.1 (20180117)',
+  'Endpoint',
+  'Human health',
+  'Aggregated',
+  'Hierarchist'), plotnum =4)   
 
 
         
