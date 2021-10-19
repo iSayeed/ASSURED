@@ -383,7 +383,7 @@ if lca:
             
     
     # plotting ref: https://matplotlib.org/stable/gallery/lines_bars_and_markers/bar_stacked.html
-    st.write('Single bus comparison')
+    st.subheader('Single bus comparison')
     if n18m_bus != 0: 
         diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
         diesel18use = do_lca(use18mdiesel)*1000
@@ -462,7 +462,7 @@ if lca:
     # st.write(df)
     df.to_csv(busline + ' single bus.csv')
 #plotting of total fleet of CO2 
-    st.write('Fleet comparison')
+    st.subheader('Fleet comparison')
     # before that, let's make the charger share to zero 
     if n18m_bus != 0: 
         set_charger_share_usephase(usephase18m,personkm18m, 0)
@@ -1342,7 +1342,7 @@ if lca:
         # charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
     
         
-        
+    st.subheader(" Relative aggregated results of ReCiPe midpoint impact categories")    
     if n18m_bus != 0:   
         dieseltotal = (multi_lca(bus18mdieselproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mdieselproduction)/personkmdiesel12)*n18m_bus +\
                        multi_lca(use18mdiesel)*n18m_bus+ multi_lca(use12mdiesel)*n12m_bus 
@@ -1451,7 +1451,7 @@ if lca:
         st.plotly_chart(fig)
 
     #production phase 
-    st.write('Relative results of Production and EoL phase')
+    st.subheader('Relative results of Production and EoL phase')
     if n18m_bus != 0:   
         dieselproduction = (multi_lca(bus18mdieselproduction)/personkmdiesel18)*n18m_bus + (multi_lca(bus12mdieselproduction)/personkmdiesel12)*n18m_bus
             
@@ -1555,7 +1555,7 @@ if lca:
         
         st.plotly_chart(fig)
         
-    st.write('Relative results of Use phase') 
+    st.subheader('Relative results of Use phase') 
     if n18m_bus != 0:   
         dieseltotal = multi_lca(use18mdiesel)*n18m_bus+ multi_lca(use12mdiesel)*n12m_bus 
             
@@ -1603,7 +1603,11 @@ if lca:
                         width = 900, 
                         height = 600,
             
-        )          
+        )     
+        fig.update_traces(marker=dict(size=12,
+                          line=dict(width=2,
+                                    color='DarkSlateGrey')),
+              selector=dict(mode='markers'))
         
         st.plotly_chart(fig)
     else: 
@@ -1653,7 +1657,11 @@ if lca:
                         width = 900, 
                         height = 600,
             
-        )    
+        )  
+        fig.update_traces(marker=dict(size=15,
+                          line=dict(width=2,
+                                    color='DarkSlateGrey')),
+              selector=dict(mode='markers'))
         
         st.plotly_chart(fig)
 
@@ -1671,7 +1679,7 @@ if lca:
     # for m in endpoints: 
     #     endpoint_plot(m,plotnum =4)
         
-
+    st.subheader('ReCiPe 2016(H) - Human health, Aggregated DALY ')
     endpoint_plot(('ReCiPe 2016',
   '1.1 (20180117)',
   'Endpoint',
@@ -1681,5 +1689,5 @@ if lca:
 
 
         
-    st.write('number of lca calculation')
-    st.write(do_lca.counter) 
+    # st.write('number of lca calculation')
+    # st.write(do_lca.counter) 
