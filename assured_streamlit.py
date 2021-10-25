@@ -148,7 +148,7 @@ if lca:
     
     # brightway2  
     
-    bw.projects.set_current('ASSURED 4')
+    bw.projects.set_current('ASSURED 5')
     
     busdb = bw.Database('assured bus')
     
@@ -225,8 +225,8 @@ if lca:
         se = (0.01/1000000)*lifetime_diesel_kg
         #zinc 
         zn = (1/1000000)*lifetime_diesel_kg
-        #lead 
-        pb = (0.00000011/1000000)*lifetime_diesel_kg
+        # #lead 
+        # pb = (0.00000011/1000000)*lifetime_diesel_kg
         #mercury
         hg = (0.00002/1000000)*lifetime_diesel_kg
         #chromium IV
@@ -236,7 +236,7 @@ if lca:
         so2 = (0.035/349.8)*lifetime_diesel_kg
        
         metal = {'Cadmium':cd, 'Copper':cu, 'Chromium':cr, 'Nickel':ni, 
-                 'Selenium':se, 'Zinc':zn, 'Lead':pb, 'Mercury':hg, 
+                 'Selenium':se, 'Zinc':zn,  'Mercury':hg, 
                  'Chromium VI':crvi, 'Sulfur dioxide':so2}
         
         
