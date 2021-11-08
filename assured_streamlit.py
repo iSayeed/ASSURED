@@ -1691,3 +1691,114 @@ if lca:
         
     # st.write('number of lca calculation')
     # st.write(do_lca.counter) 
+    def endpoint_plot_relative(method, plotnum =2): 
+        if n18m_bus != 0: 
+            set_charger_share_usephase(usephase18m,personkm18m, 0)
+        
+        set_charger_share_usephase(usephase12m,personkm12m, 0)
+        
+        if n18m_bus != 0: 
+            diesel18use = do_lca(use18mdiesel, method = method)
+            assured18use =do_lca(usephase18m, method = method)
+        
+        assured12use =do_lca(usephase12m, method = method)
+        diesel12use =do_lca(use12mdiesel, method = method)
+        
+        # st.write('use phase values of ' + method[2])
+        # st.write([diesel18use,assured18use, assured12use, diesel12use])
+        
+        if n18m_bus != 0: 
+            personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
+    
+        personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+    
+    
+        if n18m_bus != 0:
+            pkmavg = np.mean([personkm18m, personkm12m])
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            
+            total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
+            
+            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)/pkmavg)
+                
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
+            total_use_impact_diesel = diesel18use*n18m_bus + diesel12use* n12m_bus
+            
+            # st.write('use phase values of ' + method[2])
+            # st.write([total_imact_bus,total_use_impact_assured, charger_impact, total_diesel_bus_impact,total_use_impact_diesel ])
+            # st.write('diesel technology')
+            # st.write([total_diesel_bus_impact, total_use_impact_diesel ])
+            
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+            charger =np.array([0, charger_impact])
+            use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+            
+            total = production_phase + use_phase + charger
+            
+            # total = np.array([diseltotal, assuredtotal]). So 
+            # total/total[0] will be [1, assuredtotal/dieseltolal] which will 
+            #give relative total result 
+            relative_total = total/total[0]
+            
+            fig, ax = plt.subplots()
+            plt.style.use('seaborn')
+            ax.bar(labels, relative_total, width, label='Relative result')
+            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+            #        label='Use phase')
+            
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.legend()
+            #plt.savefig(fname = busline + ' ' + method[plotnum] )
+            st.pyplot(fig) 
+        
+        else: 
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_use_impact_assured =  assured12use* n12m_bus
+            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
+                
+            
+            total_diesel_bus_impact = diesel12production*n12m_bus 
+            total_use_impact_diesel = diesel12use* n12m_bus
+            
+            labels = ['Diesel Technology', 'ASSURED Technology']
+            production_phase = np.array([total_diesel_bus_impact,total_imact_bus])
+            charger =np.array([0, charger_impact])
+            use_phase = np.array([total_use_impact_diesel,total_use_impact_assured])
+            width = 0.35       # the width of the bars: can also be len(x) sequence
+
+            total = production_phase + use_phase + charger
+            
+            # total = np.array([diseltotal, assuredtotal]). So 
+            # total/total[0] will be [1, assuredtotal/dieseltolal] which will 
+            #give relative total result 
+            relative_total = total/total[0]
+            
+            fig, ax = plt.subplots()
+            plt.style.use('seaborn')
+            ax.bar(labels, relative_total, width)
+            # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
+            # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
+            #        label='Use phase')
+            
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.legend()
+            plt.savefig(fname = busline + ' ' + method[plotnum] )
+            st.pyplot(fig)
+
+    st.subheader('ReCiPe 2016(H) - Human health, Aggregated DALY ')
+    endpoint_plot_relative(('ReCiPe 2016',
+  '1.1 (20180117)',
+  'Endpoint',
+  'Human health',
+  'Aggregated',
+  'Hierarchist'), plotnum =4) 
