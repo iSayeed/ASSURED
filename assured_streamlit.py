@@ -508,9 +508,9 @@ if lca:
         st.pyplot(fig)  
     
     else: 
-        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)/personkm12m)[0]*1000
+        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)[0]/personkm12m)*1000
         total_use_impact_assured =  assured12use* n12m_bus
-        charger_impact = (fc*do_lca(fu_fc)/personkm12m)[0]*1000 + (oc*do_lca(fu_oc)/personkm12m)[0]*1000
+        charger_impact = (fc*do_lca(fu_fc)[0]/personkm12m)*1000 + (oc*do_lca(fu_oc)[0]/personkm12m)*1000
             
         
         total_diesel_bus_impact = diesel12production*n12m_bus 
@@ -1106,7 +1106,7 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit')+ '/pkm')
             ax.legend()
             #plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig) 
@@ -1133,7 +1133,7 @@ if lca:
             ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
                    label='Use phase')
             
-            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit')+ '/pkm')
             ax.legend()
             plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig)
@@ -1757,7 +1757,7 @@ if lca:
             # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
             #        label='Use phase')
             
-            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit') + '/pkm')
             ax.legend()
             #plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig) 
@@ -1777,21 +1777,56 @@ if lca:
                     [(sum(scores), name) for name, scores in names.items()], 
                     reverse=True
                             )
+            def top_emissions_by_name(lca):
+                names = defaultdict(list)
             
-            lcaobj = do_lca(usephase18m, method = method)[1]
-            top_process = top_processes_by_name(lcaobj)[:5]
-            processes_name = [x[1] for x in top_process]
-            value = [x[0] for x in top_process]
+                for flow in bw.Database("biosphere3"):
+                    if flow.key in lca.biosphere_dict:
+                        names[flow['name']].append(
+                            lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+                        )
+                
+                return sorted(
+                    [(sum(scores), name) for name, scores in names.items()], 
+                    reverse=True
+                )
             
-            fig, ax = plt.subplots()
-            y_pos = np.arange(len(processes_name))
-            ax.barh(y_pos, value, align='center') 
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(processes_name)
-            ax.invert_yaxis()
-            ax.set_xlabel('pKm')
-            ax.set_title('Top Processes')
-            st.pyplot(fig) 
+            def plot_contribution(activity):
+                lcaobj = do_lca(activity, method = method)[1]
+                #proceses 
+                top_process = top_processes_by_name(lcaobj)[:5]
+                processes_name = [x[1] for x in top_process]
+                value = [x[0] for x in top_process]
+                #emissions 
+                top_emission = top_emissions_by_name(lcaobj)[:5]
+                emission_name = [x[1] for x in top_emission]
+                evalue = [x[0] for x in top_emission]
+
+                
+                fig, ax = plt.subplots()
+                y_pos = np.arange(len(processes_name))
+                ax.barh(y_pos, value, align='center') 
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(processes_name)
+                ax.invert_yaxis()
+                ax.set_xlabel('DALY/pkm')
+                ax.set_title('Top Processes')
+                st.pyplot(fig) 
+
+                fig, ax = plt.subplots()
+                y_pos = np.arange(len(emission_name))
+                ax.barh(y_pos, evalue, align='center') 
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(emission_name)
+                ax.invert_yaxis()
+                ax.set_xlabel('DALY/pkm')
+                ax.set_title('Top Emissions')
+                st.pyplot(fig) 
+            
+            st.write(" prcocess contribution of a ASSURED bus use phase")
+            plot_contribution(usephase12m)
+            st.write(" prcocess contribution of a Diesel bus use phase")
+            plot_contribution(use12mdiesel)
         
         else: 
             total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
@@ -1822,11 +1857,76 @@ if lca:
             # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
             #        label='Use phase')
             
-            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
+            ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit')+ '/pkm')
             ax.legend()
             plt.savefig(fname = busline + ' ' + method[plotnum] )
             st.pyplot(fig)
 
+            def top_processes_by_name(lca):
+                names = defaultdict(list)
+            
+                for flow in ecodb:
+                    if flow.key in lca.activity_dict:
+                        names[flow['name']].append(
+                            lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+                        )
+                
+                return sorted(
+                    [(sum(scores), name) for name, scores in names.items()], 
+                    reverse=True
+                            )
+            def top_emissions_by_name(lca):
+                names = defaultdict(list)
+            
+                for flow in bw.Database("biosphere3"):
+                    if flow.key in lca.biosphere_dict:
+                        names[flow['name']].append(
+                            lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+                        )
+                
+                return sorted(
+                    [(sum(scores), name) for name, scores in names.items()], 
+                    reverse=True
+                )
+            
+            def plot_contribution(activity):
+                lcaobj = do_lca(activity, method = method)[1]
+                #proceses 
+                top_process = top_processes_by_name(lcaobj)[:5]
+                processes_name = [x[1] for x in top_process]
+                value = [x[0] for x in top_process]
+                #emissions 
+                top_emission = top_emissions_by_name(lcaobj)[:5]
+                emission_name = [x[1] for x in top_emission]
+                evalue = [x[0] for x in top_emission]
+
+                
+                fig, ax = plt.subplots()
+                y_pos = np.arange(len(processes_name))
+                ax.barh(y_pos, value, align='center') 
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(processes_name)
+                ax.invert_yaxis()
+                ax.set_xlabel('DALY/pkm')
+                ax.set_title('Top Processes')
+                st.pyplot(fig) 
+
+                fig, ax = plt.subplots()
+                y_pos = np.arange(len(emission_name))
+                ax.barh(y_pos, evalue, align='center') 
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(emission_name)
+                ax.invert_yaxis()
+                ax.set_xlabel('DALY/pkm')
+                ax.set_title('Top Emissions')
+                st.pyplot(fig) 
+            
+            st.write(" prcocess contribution of a ASSURED bus use phase")
+            plot_contribution(usephase12m)
+            st.write(" prcocess contribution of a Diesel bus use phase")
+            plot_contribution(use12mdiesel)
+            
+            
     st.subheader('ReCiPe 2016(H) - Human health, Aggregated DALY ')
     endpoint_plot_relative(('ReCiPe 2016',
   '1.1 (20180117)',
