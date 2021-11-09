@@ -1751,7 +1751,7 @@ if lca:
             
             fig, ax = plt.subplots()
             plt.style.use('seaborn')
-            ax.bar(labels, relative_total, width, label='Relative result')
+            ax.bar(labels, relative_total, width)
             # ax.bar(labels, charger, width, bottom =production_phase, label='Charger')
             # ax.bar(labels, use_phase, width, bottom=sum([production_phase,charger]),
             #        label='Use phase')
