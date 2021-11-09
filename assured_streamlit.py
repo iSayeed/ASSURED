@@ -14,7 +14,7 @@ from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
 import seaborn as sns
 import brightway2 as bw
-
+from collections import defaultdict
 
 st.image('./ASSURED.jpg')
 
@@ -151,6 +151,7 @@ if lca:
     bw.projects.set_current('ASSURED 5')
     
     busdb = bw.Database('assured bus')
+    ecodb = bw.Database('cutoff371')
     
     # select the 18m bus 
     
@@ -1759,6 +1760,37 @@ if lca:
             ax.set_ylabel(method[plotnum] + ' ' + bw.methods.get(method).get('unit'))
             ax.legend()
             #plt.savefig(fname = busline + ' ' + method[plotnum] )
+            st.pyplot(fig) 
+            
+            
+
+            def top_processes_by_name(lca):
+                names = defaultdict(list)
+            
+                for flow in ecodb:
+                    if flow.key in lca.activity_dict:
+                        names[flow['name']].append(
+                            lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+                        )
+                
+                return sorted(
+                    [(sum(scores), name) for name, scores in names.items()], 
+                    reverse=True
+                            )
+            
+            lcaobj = do_lca(usephase18m, method = method)[1]
+            top_process = top_processes_by_name(lcaobj)[:5]
+            processes_name = [x[1] for x in top_process]
+            value = [x[0] for x in top_process]
+            
+            fig, ax = plt.subplots()
+            y_pos = np.arange(len(processes_name))
+            ax.barh(y_pos, value, align='center') 
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(processes_name)
+            ax.invert_yaxis()
+            ax.set_xlabel('pKm')
+            ax.set_title('Top Processes')
             st.pyplot(fig) 
         
         else: 
