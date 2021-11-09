@@ -127,7 +127,7 @@ def do_lca(fu, method = ('ReCiPe Midpoint (H) V1.13', 'climate change', 'GWP100'
     lca.lcia()
     do_lca.counter += 1
 
-    return lca.score
+    return [lca.score, lca]
 do_lca.counter = 0 
 
 #variables 
@@ -347,33 +347,33 @@ if lca:
     #Fleet lca 
     if n18m_bus != 0: 
         personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-        diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
-        assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
+        diesel18production =(do_lca(bus18mdieselproduction)[0]/personkmdiesel18)*1000
+        assured18production =(do_lca(bus18mproduction)[0]/personkm18m)*1000
     
     personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-    diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
-    assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
+    diesel12production =(do_lca(bus12mdieselproduction)[0]/personkmdiesel12)*1000
+    assured12production=(do_lca(bus12mproduction)[0]/personkm12m)*1000
     
     
     if n18m_bus != 0: 
-        diesel18use = do_lca(use18mdiesel)*1000
-        assured18use =do_lca(usephase18m)*1000
+        diesel18use = do_lca(use18mdiesel)[0]*1000
+        assured18use =do_lca(usephase18m)[0]*1000
     
-    assured12use =do_lca(usephase12m)*1000
-    diesel12use =do_lca(use12mdiesel)*1000
+    assured12use =do_lca(usephase12m)[0]*1000
+    diesel12use =do_lca(use12mdiesel)[0]*1000
     
     if n18m_bus != 0: 
-        total_imact_bus = n18m_bus*(do_lca(bus18mproduction)/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_imact_bus = n18m_bus*(do_lca(bus18mproduction)[0]/personkm18m)*1000 + n12m_bus*(do_lca(bus12mproduction)[0]/personkm12m)*1000
     else: 
-        total_imact_bus = n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_imact_bus = n12m_bus*(do_lca(bus12mproduction)[0]/personkm12m)*1000
     
     fu_fc = [x for x in fast_charger_activity if str(fc_power) in x['name']][0]
     fu_oc = [x for x in overnight_charger_activity if str(oc_power) in x['name']][0]
     
     if n18m_bus != 0: 
-        fc_charger_impact = (fc*do_lca(fu_fc)/personkm18m)*1000 + (oc*do_lca(fu_oc)/personkm18m)*1000
+        fc_charger_impact = (fc*do_lca(fu_fc)[0]/personkm18m)*1000 + (oc*do_lca(fu_oc)[0]/personkm18m)*1000
     else: 
-        fc_charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
+        fc_charger_impact = (fc*do_lca(fu_fc)[0]/personkm12m)*1000 + (oc*do_lca(fu_oc)[0]/personkm12m)*1000
     
     
     def update_names_in_exchanges(activity): 
@@ -385,15 +385,15 @@ if lca:
     # plotting ref: https://matplotlib.org/stable/gallery/lines_bars_and_markers/bar_stacked.html
     st.subheader('Single bus comparison')
     if n18m_bus != 0: 
-        diesel18production =(do_lca(bus18mdieselproduction)/personkmdiesel18)*1000
-        diesel18use = do_lca(use18mdiesel)*1000
-        assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
-        assured18use =do_lca(usephase18m)*1000
+        diesel18production =(do_lca(bus18mdieselproduction)[0]/personkmdiesel18)*1000
+        diesel18use = do_lca(use18mdiesel)[0]*1000
+        assured18production =(do_lca(bus18mproduction)[0]/personkm18m)*1000
+        assured18use =do_lca(usephase18m)[0]*1000
     
-    diesel12production =(do_lca(bus12mdieselproduction)/personkmdiesel12)*1000
-    diesel12use =do_lca(use12mdiesel)*1000
-    assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
-    assured12use =do_lca(usephase12m)*1000
+    diesel12production =(do_lca(bus12mdieselproduction)[0]/personkmdiesel12)*1000
+    diesel12use =do_lca(use12mdiesel)[0]*1000
+    assured12production=(do_lca(bus12mproduction)[0]/personkm12m)*1000
+    assured12use =do_lca(usephase12m)[0]*1000
     
     if n18m_bus != 0: 
         labels = ['Diesel Bus 12m', 'Diesel Bus 18m', 'ASSURED Bus 12m', 'ASSURED Bus 18m']
@@ -475,7 +475,7 @@ if lca:
         total_imact_bus = n18m_bus*assured18production + n12m_bus*assured12production
         #total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
         total_use_impact_assured = n18m_bus*assured18use + n12m_bus*assured12use
-        charger_impact = (fc*do_lca(fu_fc)/pkmavg)*1000 + (oc*do_lca(fu_oc)/pkmavg)*1000
+        charger_impact = (fc*do_lca(fu_fc)[0]/pkmavg)*1000 + (oc*do_lca(fu_oc)[0]/pkmavg)*1000
             
         
         total_diesel_bus_impact = diesel12production*n12m_bus + \
@@ -507,9 +507,9 @@ if lca:
         st.pyplot(fig)  
     
     else: 
-        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)/personkm12m)*1000
+        total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)/personkm12m)[0]*1000
         total_use_impact_assured =  assured12use* n12m_bus
-        charger_impact = (fc*do_lca(fu_fc)/personkm12m)*1000 + (oc*do_lca(fu_oc)/personkm12m)*1000
+        charger_impact = (fc*do_lca(fu_fc)/personkm12m)[0]*1000 + (oc*do_lca(fu_oc)/personkm12m)[0]*1000
             
         
         total_diesel_bus_impact = diesel12production*n12m_bus 
@@ -623,15 +623,15 @@ if lca:
     methods_single = [nox, pm10, co2]
     def perkm_single(method):
         if n18m_bus != 0: 
-            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
-            diesel18use = do_lca(use18mdiesel, method = method)
-            assured18production =(do_lca(bus18mproduction, method = method)/personkm18m)
-            assured18use =do_lca(usephase18m, method = method)
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)[0]/personkmdiesel18)
+            diesel18use = do_lca(use18mdiesel, method = method)[0]
+            assured18production =(do_lca(bus18mproduction, method = method)[0]/personkm18m)
+            assured18use =do_lca(usephase18m, method = method)[0]
         
-        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
-        diesel12use =do_lca(use12mdiesel, method = method)
-        assured12production=(do_lca(bus12mproduction, method = method)/personkm12m)
-        assured12use =do_lca(usephase12m, method = method)
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)[0]/personkmdiesel12)
+        diesel12use =do_lca(use12mdiesel, method = method)[0]
+        assured12production=(do_lca(bus12mproduction, method = method)[0]/personkm12m)
+        assured12use =do_lca(usephase12m, method = method)[0]
         
         if n18m_bus != 0: 
             labels = ['Diesel Bus 12m', 'Diesel Bus 18m', 'ASSURED Bus 12m', 'ASSURED Bus 18m']
@@ -1054,34 +1054,34 @@ if lca:
         set_charger_share_usephase(usephase12m,personkm12m, 0)
         
         if n18m_bus != 0: 
-            diesel18use = do_lca(use18mdiesel, method = method)
-            assured18use =do_lca(usephase18m, method = method)
+            diesel18use = do_lca(use18mdiesel, method = method)[0]
+            assured18use =do_lca(usephase18m, method = method)[0]
         
-        assured12use =do_lca(usephase12m, method = method)
-        diesel12use =do_lca(use12mdiesel, method = method)
+        assured12use =do_lca(usephase12m, method = method)[0]
+        diesel12use =do_lca(use12mdiesel, method = method)[0]
         
         # st.write('use phase values of ' + method[2])
         # st.write([diesel18use,assured18use, assured12use, diesel12use])
         
         if n18m_bus != 0: 
             personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)[0]/personkmdiesel18)
             # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
     
         personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)[0]/personkmdiesel12)
         # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
     
     
         if n18m_bus != 0:
             pkmavg = np.mean([personkm18m, personkm12m])
-            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
-            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)[0]/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             
             total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
             
-            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
-            + (oc*do_lca(fu_oc, method = method)/pkmavg)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)[0]/pkmavg)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
@@ -1111,9 +1111,9 @@ if lca:
             st.pyplot(fig) 
         
         else: 
-            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             total_use_impact_assured =  assured12use* n12m_bus
-            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/personkm12m) + (oc*do_lca(fu_oc, method = method)[0]/personkm12m)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus 
@@ -1165,34 +1165,34 @@ if lca:
         set_charger_share_usephase(usephase12m,personkm12m, 0)
         
         if n18m_bus != 0: 
-            diesel18use = do_lca(use18mdiesel, method = method)
-            assured18use =do_lca(usephase18m, method = method)
+            diesel18use = do_lca(use18mdiesel, method = method)[0]
+            assured18use =do_lca(usephase18m, method = method)[0]
         
-        assured12use =do_lca(usephase12m, method = method)
-        diesel12use =do_lca(use12mdiesel, method = method)
+        assured12use =do_lca(usephase12m, method = method)[0]
+        diesel12use =do_lca(use12mdiesel, method = method)[0]
         
         # st.write('use phase values of ' + method[2])
         # st.write([diesel18use,assured18use, assured12use, diesel12use])
         
         if n18m_bus != 0: 
             personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)[0]/personkmdiesel18)
             # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
     
         personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)[0]/personkmdiesel12)
         # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
     
     
         if n18m_bus != 0:
             pkmavg = np.mean([personkm18m, personkm12m])
-            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
-            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)[0]/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             
             total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
             
-            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
-            + (oc*do_lca(fu_oc, method = method)/pkmavg)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)[0]/pkmavg)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
@@ -1238,9 +1238,9 @@ if lca:
             st.pyplot(fig) 
         
         else: 
-            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             total_use_impact_assured =  assured12use* n12m_bus
-            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/personkm12m) + (oc*do_lca(fu_oc, method = method)[0]/personkm12m)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus 
@@ -1698,34 +1698,34 @@ if lca:
         set_charger_share_usephase(usephase12m,personkm12m, 0)
         
         if n18m_bus != 0: 
-            diesel18use = do_lca(use18mdiesel, method = method)
-            assured18use =do_lca(usephase18m, method = method)
+            diesel18use = do_lca(use18mdiesel, method = method)[0]
+            assured18use =do_lca(usephase18m, method = method)[0]
         
-        assured12use =do_lca(usephase12m, method = method)
-        diesel12use =do_lca(use12mdiesel, method = method)
+        assured12use =do_lca(usephase12m, method = method)[0]
+        diesel12use =do_lca(use12mdiesel, method = method)[0]
         
         # st.write('use phase values of ' + method[2])
         # st.write([diesel18use,assured18use, assured12use, diesel12use])
         
         if n18m_bus != 0: 
             personkmdiesel18 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_18m
-            diesel18production =(do_lca(bus18mdieselproduction, method = method)/personkmdiesel18)
+            diesel18production =(do_lca(bus18mdieselproduction, method = method)[0]/personkmdiesel18)
             # assured18production =(do_lca(bus18mproduction)/personkm18m)*1000
     
         personkmdiesel12 = 12* return_trip_distance * number_of_return_trip_per_day * 365 * average_passengers_12m
-        diesel12production =(do_lca(bus12mdieselproduction, method = method)/personkmdiesel12)
+        diesel12production =(do_lca(bus12mdieselproduction, method = method)[0]/personkmdiesel12)
         # assured12production=(do_lca(bus12mproduction)/personkm12m)*1000
     
     
         if n18m_bus != 0:
             pkmavg = np.mean([personkm18m, personkm12m])
-            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)/personkm18m) 
-            + n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus = n18m_bus*(do_lca(bus18mproduction, method = method)[0]/personkm18m) 
+            + n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             
             total_use_impact_assured = assured18use*n18m_bus + assured12use* n12m_bus
             
-            charger_impact = (fc*do_lca(fu_fc, method = method)/pkmavg)
-            + (oc*do_lca(fu_oc, method = method)/pkmavg)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/pkmavg)
+            + (oc*do_lca(fu_oc, method = method)[0]/pkmavg)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus + diesel18production*n18m_bus
@@ -1762,9 +1762,9 @@ if lca:
             st.pyplot(fig) 
         
         else: 
-            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)/personkm12m)
+            total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
             total_use_impact_assured =  assured12use* n12m_bus
-            charger_impact = (fc*do_lca(fu_fc, method = method)/personkm12m) + (oc*do_lca(fu_oc, method = method)/personkm12m)
+            charger_impact = (fc*do_lca(fu_fc, method = method)[0]/personkm12m) + (oc*do_lca(fu_oc, method = method)[0]/personkm12m)
                 
             
             total_diesel_bus_impact = diesel12production*n12m_bus 
