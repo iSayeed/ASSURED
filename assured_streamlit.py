@@ -10,7 +10,7 @@ import numpy as np
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from wordcloud import WordCloud, STOPWORDS
+#from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
 import seaborn as sns
 import brightway2 as bw
@@ -43,20 +43,20 @@ country = {'Barcelona H16': 'ES',
 with st.form(key = 'Bus Info') : 
     
     st.subheader('Number of buses')
-    cols = st.beta_columns(3)
+    cols = st.columns(3)
     
     n18m_bus = int(cols[0].text_input("Number of 18m bus", data[busline][0] ))
     n12m_bus = int(cols[1].text_input("Number of 12m bus", data[busline][1] ))
     lifetime = int(cols[2].text_input("Bus lifetime (year)", data[busline][2]  ))
         
     st.subheader('Charging infrastructures')
-    charger = st.beta_columns(2)
+    charger = st.columns(2)
     
     fc = int(charger[0].text_input("Number of Fast Charger", data[busline][3]  ))
 
     oc = int(charger[1].text_input("Number of Overnight chargers", data[busline][4]  ))
     
-    charger_power = st.beta_columns(2)
+    charger_power = st.columns(2)
     
     fc_power = int(charger_power[0].text_input("Power of a Fast Charger (kW)", data[busline][5]  ))
 
@@ -64,38 +64,38 @@ with st.form(key = 'Bus Info') :
     
     st.subheader('Energy consumption per day on each season')
     st.write('Energy consumption in a day in the month of March')
-    march = st.beta_columns(2)
+    march = st.columns(2)
     
     march18 = int(march[0].text_input("Energy demand per day of a 18m bus - March (kWh)", data[busline][7]  ))
     march12 = int(march[1].text_input(" Energy demand per day of a 12m bus - March (kWh)", data[busline][8]  ))
   
     
     st.write('Energy consumption in a day in the month of June')
-    june = st.beta_columns(2)
+    june = st.columns(2)
     
     june18 = int(june[0].text_input("Energy demand per day of a 18m bus - June (kWh)", data[busline][9]  ))
     june12 = int(june[1].text_input("Energy demand per day of a 12m bus - June (kWh)", data[busline][10]  ))
     
     st.write('Energy consumption in a day in the month of September')
-    sept = st.beta_columns(2)
+    sept = st.columns(2)
     
     sept18 = int(sept[0].text_input("Energy demand per day of a 18m bus - September (kWh)", data[busline][11]  ))
     sept12 = int(sept[1].text_input("Energy demand per day of a 12m bus - September (kWh)", data[busline][12]  ))
     
     st.write('Energy consumption in a day in the month of December')
-    dec = st.beta_columns(2)
+    dec = st.columns(2)
     
     dec18 = int(dec[0].text_input("Energy demand per day of a 18m bus - December (kWh)", data[busline][13]  ))
     dec12 = int(dec[1].text_input("Energy demand per day of a 12m bus - December (kWh)", data[busline][14]  ))
     
     st.subheader('Diesel bus fuel consumption')
-    fuel_rate = st.beta_columns(2)
+    fuel_rate = st.columns(2)
     
     diesel12fuel_consumption = float(fuel_rate[0].text_input('Fuel consumption rate of 12m bus (L/100 km)', 40))
     diesel18fuel_consumption = float(fuel_rate[1].text_input('Fuel consumption rate of 18m bus (L/100 km)', 70))
     
     st.subheader('Route Details')
-    route = st.beta_columns(5)
+    route = st.columns(5)
     
     return_trip_distance = float(route[0].text_input("Return Trip Distance (km)", data[busline][15]  ))
     number_of_return_trip_per_day = int(route[1].text_input("Number of return trip per day", data[busline][16] ))
@@ -148,7 +148,7 @@ if lca:
     
     # brightway2  
     
-    bw.projects.set_current('ASSURED 5')
+    bw.projects.set_current('ASSURED 6')
     
     busdb = bw.Database('assured bus')
     ecodb = bw.Database('cutoff371')
@@ -214,31 +214,86 @@ if lca:
         
         lifetime_diesel_kg = lifetime_diesel_liter*0.832  # 1 liter of diesel 0.832 kg of diesel 
         
-        #cadmium 
-        cd = (0.01/1000000)*lifetime_diesel_kg
-        #copper
-        cu = (1.7/1000000)*lifetime_diesel_kg
-        #Chromium 
-        cr = (0.05/1000000)*lifetime_diesel_kg
-        #Nickel 
-        ni = (0.07/1000000)*lifetime_diesel_kg
-        #selenium 
-        se = (0.01/1000000)*lifetime_diesel_kg
-        #zinc 
-        zn = (1/1000000)*lifetime_diesel_kg
-        #lead 
-        pb = (0.00000011/1000000)*lifetime_diesel_kg
-        #mercury
-        hg = (0.00002/1000000)*lifetime_diesel_kg
-        #chromium IV
-        crvi = (0.001/1000000)*lifetime_diesel_kg
+        kg_per_fuel_emissions_dict = {'Arsenic': 2.33E-12,
+                             'Cadmium': 2.02E-10,
+                             'Chromium':6.98E-10,
+                             'Chromium VI':1.40E-12,
+                             'Copper':4.93E-10,
+                             'Mercury':1.23E-10,
+                             'Nickel':2.05E-10,
+                             'PAH, polycyclic aromatic hydrocarbons':1.82E-09,
+                             'Selenium':2.33E-12,
+                             'Zinc':4.05E-08, 
+                             'Sulfur dioxide':8.85E-04}
         
-        #sulfur 
-        so2 = (0.035/349.8)*lifetime_diesel_kg
+        remaining_emisison_dict_13m = {'NMVOC, non-methane volatile organic compounds, unspecified origin': 1.6549112061835919e-06,
+                                     'm-Xylene': 4.0097661851396873e-07,
+                                     'Toluene': 4.0915981481017235e-09,
+                                     'Acetaldehyde': 1.869860353682487e-06,
+                                     'Styrene': 2.2912949629369646e-07,
+                                     'Formaldehyde': 3.436942444405447e-06,
+                                     'Heptane': 1.2274794444305164e-07,
+                                     'Benzene': 3.482978509871579e-08,
+                                     'Pentane': 2.454958888861034e-08,
+                                     'Ammonia': 1.2550224658583605e-05,
+                                     'Acrolein': 7.242128722140048e-07,
+                                     'Propane': 4.091598148101723e-08,
+                                     'Butane': 6.137397222152582e-08,
+                                     'Ethane': 1.227479444430517e-08,
+                                     'Methane, fossil': 5.005478189090163e-08,
+                                     'Particulates, < 2.5 um': 3.5286737271405413e-06,
+                                     'o-Xylene': 1.6366392592406892e-07,
+                                     'Nitrogen oxides': 0.0003506494488693155,
+                                     'Carbon monoxide, fossil': 2.652442682311893e-05,
+                                     'Dinitrogen monoxide': 4.091598148101723e-05,
+                                     'Benzaldehyde': 5.60548946289936e-07}
+        
+        remaining_emisison_dict_18m = {'Carbon monoxide, fossil': 9.567321556005686e-06,
+                                         'Heptane': 4.427500215770189e-08,
+                                         'Benzene': 1.2563052011949406e-08,
+                                         'Ammonia': 4.526847487016199e-06,
+                                         'Pentane': 8.855000431540376e-09,
+                                         'Acrolein': 2.6122251273044115e-07,
+                                         'Ethane': 2.466855791875481e-09,
+                                         'Methane, fossil': 1.0059470175154062e-08,
+                                         'Particulates, < 2.5 um': 7.09154785518547e-07,
+                                         'Propane': 1.4758334052567293e-08,
+                                         'Nitrogen oxides': 7.046974413999491e-05,
+                                         'Butane': 2.2137501078850945e-08,
+                                         'Benzaldehyde': 1.1265308116231365e-07,
+                                         'o-Xylene': 5.903333621026917e-08,
+                                         'Toluene': 8.222852639584936e-10,
+                                         'Dinitrogen monoxide': 1.4758334052567294e-05,
+                                         'Acetaldehyde': 3.7578436562903144e-07,
+                                         'NMVOC, non-methane volatile organic compounds, unspecified origin': 5.969240263618213e-07,
+                                         'Formaldehyde': 1.2397000604156528e-06,
+                                         'Styrene': 4.6047974781675635e-08,
+                                         'm-Xylene': 1.4463167371515947e-07}
+        # #cadmium 
+        # cd = (0.01/1000000)*lifetime_diesel_kg
+        # #copper
+        # cu = (1.7/1000000)*lifetime_diesel_kg
+        # #Chromium 
+        # cr = (0.05/1000000)*lifetime_diesel_kg
+        # #Nickel 
+        # ni = (0.07/1000000)*lifetime_diesel_kg
+        # #selenium 
+        # se = (0.01/1000000)*lifetime_diesel_kg
+        # #zinc 
+        # zn = (1/1000000)*lifetime_diesel_kg
+        # #lead 
+        # pb = (0.00000011/1000000)*lifetime_diesel_kg
+        # #mercury
+        # hg = (0.00002/1000000)*lifetime_diesel_kg
+        # #chromium IV
+        # crvi = (0.001/1000000)*lifetime_diesel_kg
+        
+        # #sulfur 
+        # so2 = (0.035/349.8)*lifetime_diesel_kg
        
-        metal = {'Cadmium':cd, 'Copper':cu, 'Chromium':cr, 'Nickel':ni, 
-                 'Selenium':se, 'Zinc':zn, 'Lead':pb, 'Mercury':hg, 
-                 'Chromium VI':crvi, 'Sulfur dioxide':so2}
+        # metal = {'Cadmium':cd, 'Copper':cu, 'Chromium':cr, 'Nickel':ni, 
+        #          'Selenium':se, 'Zinc':zn, 'Lead':pb, 'Mercury':hg, 
+        #          'Chromium VI':crvi, 'Sulfur dioxide':so2}
         
         
         if bussize == 18: 
@@ -276,15 +331,34 @@ if lca:
         maintenance['amount'] = 1/personkm
         maintenance.save()
         
-        #heavy metal emission setup
-        def heavy_metal(name, amount): 
-            emission = [x for x in usephasebus.biosphere() if name == x['name'] and 'air' in bw.get_activity(x['input'])['categories'] ][0]
-            emission['amount'] = amount /personkm
-            emission.save()
+        # #heavy metal emission setup
+        # def heavy_metal(name, amount): 
+        #     emission = [x for x in usephasebus.biosphere() if name == x['name'] and 'air' in bw.get_activity(x['input'])['categories'] ][0]
+        #     emission['amount'] = amount /personkm
+        #     emission.save()
         
-        for name, amount in metal.items(): 
-            heavy_metal(name, amount)
+        # # for name, amount in metal.items(): 
+        #     heavy_metal(name, amount)
         
+        biosphereofbus = [x for x in usephasebus.biosphere()]
+        
+        for exc in biosphereofbus: 
+            if exc['name'] in kg_per_fuel_emissions_dict: 
+                exc['amount'] = kg_per_fuel_emissions_dict[exc['name']]/personkm
+                exc.save()
+        
+        if bussize == 18: 
+        
+            for exc in biosphereofbus: 
+                if exc['name'] in remaining_emisison_dict_18m: 
+                    exc['amount'] = remaining_emisison_dict_18m[exc['name']]
+                    exc.save() 
+        else: 
+            for exc in biosphereofbus: 
+                if exc['name'] in remaining_emisison_dict_13m: 
+                    exc['amount'] = remaining_emisison_dict_13m[exc['name']]
+                    exc.save() 
+            
         # other emissions 
         # road share 
         road = [x for x in usephasebus.technosphere() if 'market for road' == x['name']][0]
