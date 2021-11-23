@@ -68,7 +68,7 @@ with st.form(key = 'Bus Info') :
     
     march18 = int(march[0].text_input("Energy demand per day of a 18m bus - March (kWh)", data[busline][7]  ))
     march12 = int(march[1].text_input(" Energy demand per day of a 12m bus - March (kWh)", data[busline][8]  ))
-  
+   
     
     st.write('Energy consumption in a day in the month of June')
     june = st.columns(2)
@@ -486,6 +486,16 @@ if lca:
         ax.legend()
         
         st.pyplot(fig)
+        
+        # for calculatin co2/km for RINA 
+        # st.write(production_phase)
+        # st.write(use_phase)
+        # st.write(personkm12m,personkm18m)
+        data = np.array(production_phase) + np.array(use_phase)
+        df = pd.DataFrame(data = data, index=['Diesel 12m', 'Diesel 18m', 'Assured 12m', 'Assured 18m'])
+        df['18m?'] = [0,1,0,1]
+        df['CO2/km'] = np.where(df['18m?']==0, df[0]*average_passengers_12m/1000, df[0]*average_passengers_18m/1000)
+        st.write(df)
     else: 
         labels = ['Diesel Bus 12m',  'ASSURED Bus 12m']
         production_phase = [diesel12production,assured12production]
@@ -502,6 +512,15 @@ if lca:
         ax.legend()
         
         st.pyplot(fig)
+        # for calculatin co2/km for RINA 
+        # st.write(production_phase)
+        # st.write(use_phase)
+        # st.write(personkm12m,personkm18m)
+        data = np.array(production_phase) + np.array(use_phase)
+        df = pd.DataFrame(data = data, index=['Diesel 12m', 'Assured 12m'])
+        df['18m?'] = [0,1,]
+        df['CO2/km'] = np.where(df['18m?']==0, df[0]*average_passengers_12m/1000, df[0]*average_passengers_18m/1000)
+        st.write(df)        
     
     #make dataframe 
     
@@ -580,72 +599,82 @@ if lca:
         ax.legend()
         
         st.pyplot(fig)  
+        
+        # calculate CO2 for RINA 
+        # st.write(production_phase)
+        # st.write(charger)
+        # st.write(use_phase)
+        # st.write(production_phase+charger+use_phase)
+        # st.write(np.mean([average_passengers_18m, average_passengers_12m])
+        df = pd.DataFrame(data = (production_phase+charger+use_phase), index= ['Disel Techonology', 'Assured techonology'], columns=['CO2/pkm'])
+        df['CO2/km'] = df['CO2/pkm']*np.mean([average_passengers_18m, average_passengers_12m])/1000
+        st.write(df)
 
-        def top_processes_by_name(lca):
-            names = defaultdict(list)
+        # def top_processes_by_name(lca):
+        #     names = defaultdict(list)
         
-            for flow in ecodb:
-                if flow.key in lca.activity_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                    )
+        #     for flow in ecodb:
+        #         if flow.key in lca.activity_dict:
+        #             names[flow['name']].append(
+        #                 lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+        #             )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-                        )
-        def top_emissions_by_name(lca):
-            names = defaultdict(list)
+        #     return sorted(
+        #         [(sum(scores), name) for name, scores in names.items()], 
+        #         reverse=True
+        #                 )
+        # def top_emissions_by_name(lca):
+        #     names = defaultdict(list)
         
-            for flow in bw.Database("biosphere3"):
-                if flow.key in lca.biosphere_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                    )
+        #     for flow in bw.Database("biosphere3"):
+        #         if flow.key in lca.biosphere_dict:
+        #             names[flow['name']].append(
+        #                 lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+        #             )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-            )
+        #     return sorted(
+        #         [(sum(scores), name) for name, scores in names.items()], 
+        #         reverse=True
+        #     )
         
-        def plot_contribution(activity):
-            lcaobj = do_lca(activity)[1]
-            #proceses 
-            top_process = top_processes_by_name(lcaobj)[:5]
-            processes_name = [x[1] for x in top_process]
-            value = [x[0] for x in top_process]
-            #emissions 
-            top_emission = top_emissions_by_name(lcaobj)[:5]
-            emission_name = [x[1] for x in top_emission]
-            evalue = [x[0] for x in top_emission]
+        # def plot_contribution(activity):
+        #     lcaobj = do_lca(activity)[1]
+        #     #proceses 
+        #     top_process = top_processes_by_name(lcaobj)[:5]
+        #     processes_name = [x[1] for x in top_process]
+        #     value = [x[0] for x in top_process]
+        #     #emissions 
+        #     top_emission = top_emissions_by_name(lcaobj)[:5]
+        #     emission_name = [x[1] for x in top_emission]
+        #     evalue = [x[0] for x in top_emission]
 
             
-            fig, ax = plt.subplots()
-            y_pos = np.arange(len(processes_name))
-            ax.barh(y_pos, value, align='center') 
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(processes_name)
-            ax.invert_yaxis()
-            ax.set_xlabel('g CO2-eq /pkm')
-            ax.set_title('Top Processes')
-            st.pyplot(fig) 
+        #     fig, ax = plt.subplots()
+        #     y_pos = np.arange(len(processes_name))
+        #     ax.barh(y_pos, value, align='center') 
+        #     ax.set_yticks(y_pos)
+        #     ax.set_yticklabels(processes_name)
+        #     ax.invert_yaxis()
+        #     ax.set_xlabel('g CO2-eq /pkm')
+        #     ax.set_title('Top Processes')
+        #     st.pyplot(fig) 
 
-            fig, ax = plt.subplots()
-            y_pos = np.arange(len(emission_name))
-            ax.barh(y_pos, evalue, align='center') 
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(emission_name)
-            ax.invert_yaxis()
-            ax.set_xlabel('g CO2-eq /pkm')
-            ax.set_title('Top Emissions')
-            st.pyplot(fig) 
+        #     fig, ax = plt.subplots()
+        #     y_pos = np.arange(len(emission_name))
+        #     ax.barh(y_pos, evalue, align='center') 
+        #     ax.set_yticks(y_pos)
+        #     ax.set_yticklabels(emission_name)
+        #     ax.invert_yaxis()
+        #     ax.set_xlabel('g CO2-eq /pkm')
+        #     ax.set_title('Top Emissions')
+        #     st.pyplot(fig) 
         
         
         
-        st.write(" prcocess contribution of a ASSURED bus use phase")
-        plot_contribution(usephase12m)
-        st.write(" prcocess contribution of a Diesel bus use phase")
-        plot_contribution(use12mdiesel)
+        # st.write(" prcocess contribution of a ASSURED bus use phase")
+        # plot_contribution(usephase12m)
+        # st.write(" prcocess contribution of a Diesel bus use phase")
+        # plot_contribution(use12mdiesel)
     
     else: 
         total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)[0]/personkm12m)*1000
@@ -674,71 +703,81 @@ if lca:
         
         st.pyplot(fig) 
 
-        def top_processes_by_name(lca):
-            names = defaultdict(list)
+        # calculate CO2 for RINA 
+        # st.write(production_phase)
+        # st.write(charger)
+        # st.write(use_phase)
+        # st.write(production_phase+charger+use_phase)
+        # st.write(np.mean([average_passengers_18m, average_passengers_12m])
+        df = pd.DataFrame(data = (production_phase+charger+use_phase), index= ['Disel Techonology', 'Assured techonology'], columns=['CO2/pkm'])
+        df['CO2/km'] = df['CO2/pkm']* average_passengers_12m/1000
+        st.write(df)
+'''
+        # def top_processes_by_name(lca):
+        #     names = defaultdict(list)
         
-            for flow in ecodb:
-                if flow.key in lca.activity_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                    )
+        #     for flow in ecodb:
+        #         if flow.key in lca.activity_dict:
+        #             names[flow['name']].append(
+        #                 lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+        #             )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-                        )
-        def top_emissions_by_name(lca):
-            names = defaultdict(list)
+        #     return sorted(
+        #         [(sum(scores), name) for name, scores in names.items()], 
+        #         reverse=True
+        #                 )
+        # def top_emissions_by_name(lca):
+        #     names = defaultdict(list)
         
-            for flow in bw.Database("biosphere3"):
-                if flow.key in lca.biosphere_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                    )
+        #     for flow in bw.Database("biosphere3"):
+        #         if flow.key in lca.biosphere_dict:
+        #             names[flow['name']].append(
+        #                 lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+        #             )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-            )
+        #     return sorted(
+        #         [(sum(scores), name) for name, scores in names.items()], 
+        #         reverse=True
+        #     )
         
-        def plot_contribution(activity):
-            lcaobj = do_lca(activity)[1]
-            #proceses 
-            top_process = top_processes_by_name(lcaobj)[:5]
-            processes_name = [x[1] for x in top_process]
-            value = [x[0] for x in top_process]
-            #emissions 
-            top_emission = top_emissions_by_name(lcaobj)[:5]
-            emission_name = [x[1] for x in top_emission]
-            evalue = [x[0] for x in top_emission]
+        # def plot_contribution(activity):
+        #     lcaobj = do_lca(activity)[1]
+        #     #proceses 
+        #     top_process = top_processes_by_name(lcaobj)[:5]
+        #     processes_name = [x[1] for x in top_process]
+        #     value = [x[0] for x in top_process]
+        #     #emissions 
+        #     top_emission = top_emissions_by_name(lcaobj)[:5]
+        #     emission_name = [x[1] for x in top_emission]
+        #     evalue = [x[0] for x in top_emission]
 
             
-            fig, ax = plt.subplots()
-            y_pos = np.arange(len(processes_name))
-            ax.barh(y_pos, value, align='center') 
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(processes_name)
-            ax.invert_yaxis()
-            ax.set_xlabel('g CO2-eq /pkm')
-            ax.set_title('Top Processes')
-            st.pyplot(fig) 
+        #     fig, ax = plt.subplots()
+        #     y_pos = np.arange(len(processes_name))
+        #     ax.barh(y_pos, value, align='center') 
+        #     ax.set_yticks(y_pos)
+        #     ax.set_yticklabels(processes_name)
+        #     ax.invert_yaxis()
+        #     ax.set_xlabel('g CO2-eq /pkm')
+        #     ax.set_title('Top Processes')
+        #     st.pyplot(fig) 
 
-            fig, ax = plt.subplots()
-            y_pos = np.arange(len(emission_name))
-            ax.barh(y_pos, evalue, align='center') 
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(emission_name)
-            ax.invert_yaxis()
-            ax.set_xlabel('g CO2-eq /pkm')
-            ax.set_title('Top Emissions')
-            st.pyplot(fig) 
+        #     fig, ax = plt.subplots()
+        #     y_pos = np.arange(len(emission_name))
+        #     ax.barh(y_pos, evalue, align='center') 
+        #     ax.set_yticks(y_pos)
+        #     ax.set_yticklabels(emission_name)
+        #     ax.invert_yaxis()
+        #     ax.set_xlabel('g CO2-eq /pkm')
+        #     ax.set_title('Top Emissions')
+        #     st.pyplot(fig) 
         
         
         
-        st.write(" prcocess contribution of a ASSURED bus use phase")
-        plot_contribution(usephase12m)
-        st.write(" prcocess contribution of a Diesel bus use phase")
-        plot_contribution(use12mdiesel)
+        # st.write(" prcocess contribution of a ASSURED bus use phase")
+        # plot_contribution(usephase12m)
+        # st.write(" prcocess contribution of a Diesel bus use phase")
+        # plot_contribution(use12mdiesel)
     
     fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
     df2 = pd.DataFrame(fleet_dict)
@@ -2140,3 +2179,4 @@ if lca:
   'Human health',
   'Aggregated',
   'Hierarchist'), plotnum =4) 
+'''
