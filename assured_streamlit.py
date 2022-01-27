@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import brightway2 as bw
 from collections import defaultdict
+import bw2analyzer as bwa 
 
 st.image('./ASSURED.jpg')
 
@@ -582,33 +583,40 @@ if lca:
         st.pyplot(fig)  
 
         def top_processes_by_name(lca):
-            names = defaultdict(list)
+            # names = defaultdict(list)
         
-            for flow in ecodb:
-                if flow.key in lca.activity_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                    )
+            # for flow in ecodb:
+            #     if flow.key in lca.activity_dict:
+            #         names[flow['name']].append(
+            #             lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+            #         )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-                        )
+            # return sorted(
+            #     [(sum(scores), name) for name, scores in names.items()], 
+            #     reverse=True
+            #             )
+            ca = bwa.ContributionAnalysis()
+            process = ca.annotated_top_processes(lca, limit = 5)
+            return [(x[0], x[2]) for x in process]
+        
         def top_emissions_by_name(lca):
-            names = defaultdict(list)
+            # names = defaultdict(list)
         
-            for flow in bw.Database("biosphere3"):
-                if flow.key in lca.biosphere_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                    )
+            # for flow in bw.Database("biosphere3"):
+            #     if flow.key in lca.biosphere_dict:
+            #         names[flow['name']].append(
+            #             lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+            #         )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-            )
+            # return sorted(
+            #     [(sum(scores), name) for name, scores in names.items()], 
+            #     reverse=True
+            # )
+            ca = bwa.ContributionAnalysis()
+            process = ca.annotated_top_emissions(lca, limit = 5)
+            return [(x[0], x[2]) for x in process]     
         
-        def plot_contribution(activity):
+        def plot_contribution(activity, technololgy):
             lcaobj = do_lca(activity)[1]
             #proceses 
             top_process = top_processes_by_name(lcaobj)[:5]
@@ -629,6 +637,7 @@ if lca:
             ax.set_xlabel('g CO2-eq /pkm')
             ax.set_title('Top Processes')
             st.pyplot(fig) 
+            plt.savefig(busline+' ' +technololgy+" top process.png", format="png", dpi=600)
 
             fig, ax = plt.subplots()
             y_pos = np.arange(len(emission_name))
@@ -638,14 +647,15 @@ if lca:
             ax.invert_yaxis()
             ax.set_xlabel('g CO2-eq /pkm')
             ax.set_title('Top Emissions')
+            plt.savefig(busline+' ' +technololgy+" top process.png", format="png", dpi=600)
             st.pyplot(fig) 
         
         
         
         st.write(" prcocess contribution of a ASSURED bus use phase")
-        plot_contribution(usephase12m)
+        plot_contribution(usephase12m, 'ASSURED')
         st.write(" prcocess contribution of a Diesel bus use phase")
-        plot_contribution(use12mdiesel)
+        plot_contribution(use12mdiesel, 'Diesel')
     
     else: 
         total_imact_bus =  n12m_bus*(do_lca(bus12mproduction)[0]/personkm12m)*1000
@@ -675,33 +685,39 @@ if lca:
         st.pyplot(fig) 
 
         def top_processes_by_name(lca):
-            names = defaultdict(list)
+            # names = defaultdict(list)
         
-            for flow in ecodb:
-                if flow.key in lca.activity_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                    )
+            # for flow in ecodb:
+            #     if flow.key in lca.activity_dict:
+            #         names[flow['name']].append(
+            #             lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+            #         )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-                        )
+            # return sorted(
+            #     [(sum(scores), name) for name, scores in names.items()], 
+            #     reverse=True
+            #             )
+            ca = bwa.ContributionAnalysis()
+            process = ca.annotated_top_processes(lca, limit = 5)
+            return [(x[0], x[2]) for x in process]
         def top_emissions_by_name(lca):
-            names = defaultdict(list)
+            # names = defaultdict(list)
         
-            for flow in bw.Database("biosphere3"):
-                if flow.key in lca.biosphere_dict:
-                    names[flow['name']].append(
-                        lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                    )
+            # for flow in bw.Database("biosphere3"):
+            #     if flow.key in lca.biosphere_dict:
+            #         names[flow['name']].append(
+            #             lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+            #         )
             
-            return sorted(
-                [(sum(scores), name) for name, scores in names.items()], 
-                reverse=True
-            )
+            # return sorted(
+            #     [(sum(scores), name) for name, scores in names.items()], 
+            #     reverse=True
+            # )
+            ca = bwa.ContributionAnalysis()
+            process = ca.annotated_top_emissions(lca, limit = 5)
+            return [(x[0], x[2]) for x in process]     
         
-        def plot_contribution(activity):
+        def plot_contribution(activity,technololgy):
             lcaobj = do_lca(activity)[1]
             #proceses 
             top_process = top_processes_by_name(lcaobj)[:5]
@@ -722,6 +738,7 @@ if lca:
             ax.set_xlabel('g CO2-eq /pkm')
             ax.set_title('Top Processes')
             st.pyplot(fig) 
+            plt.savefig(busline+' ' +technololgy+" top process.png", format="png", dpi=600)
 
             fig, ax = plt.subplots()
             y_pos = np.arange(len(emission_name))
@@ -732,13 +749,14 @@ if lca:
             ax.set_xlabel('g CO2-eq /pkm')
             ax.set_title('Top Emissions')
             st.pyplot(fig) 
+            plt.savefig(busline+' ' +technololgy+" top emission.png", format="png", dpi=600)
         
         
         
         st.write(" prcocess contribution of a ASSURED bus use phase")
-        plot_contribution(usephase12m)
+        plot_contribution(usephase12m, 'ASSURED')
         st.write(" prcocess contribution of a Diesel bus use phase")
-        plot_contribution(use12mdiesel)
+        plot_contribution(use12mdiesel, 'Diesel')
     
     fleet_dict = {'Fleets': labels, 'Production + Eol': production_phase, 'Chargers': charger, 'Use Phase': use_phase}
     df2 = pd.DataFrame(fleet_dict)
@@ -1971,33 +1989,40 @@ if lca:
             
 
             def top_processes_by_name(lca):
-                names = defaultdict(list)
+                # names = defaultdict(list)
             
-                for flow in ecodb:
-                    if flow.key in lca.activity_dict:
-                        names[flow['name']].append(
-                            lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                        )
+                # for flow in ecodb:
+                #     if flow.key in lca.activity_dict:
+                #         names[flow['name']].append(
+                #             lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+                #         )
                 
-                return sorted(
-                    [(sum(scores), name) for name, scores in names.items()], 
-                    reverse=True
-                            )
+                # return sorted(
+                #     [(sum(scores), name) for name, scores in names.items()], 
+                #     reverse=True
+                #             )
+                ca = bwa.ContributionAnalysis()
+                process = ca.annotated_top_processes(lca, limit = 5)
+                return [(x[0], x[2]) for x in process]
+            
             def top_emissions_by_name(lca):
-                names = defaultdict(list)
+                # names = defaultdict(list)
             
-                for flow in bw.Database("biosphere3"):
-                    if flow.key in lca.biosphere_dict:
-                        names[flow['name']].append(
-                            lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                        )
+                # for flow in bw.Database("biosphere3"):
+                #     if flow.key in lca.biosphere_dict:
+                #         names[flow['name']].append(
+                #             lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+                #         )
                 
-                return sorted(
-                    [(sum(scores), name) for name, scores in names.items()], 
-                    reverse=True
-                )
+                # return sorted(
+                #     [(sum(scores), name) for name, scores in names.items()], 
+                #     reverse=True
+                # )
+                ca = bwa.ContributionAnalysis()
+                process = ca.annotated_top_emissions(lca, limit = 5)
+                return [(x[0], x[2]) for x in process]     
             
-            def plot_contribution(activity):
+            def plot_contribution(activity, technololgy):
                 lcaobj = do_lca(activity, method = method)[1]
                 #proceses 
                 top_process = top_processes_by_name(lcaobj)[:5]
@@ -2018,6 +2043,7 @@ if lca:
                 ax.set_xlabel('DALY/pkm')
                 ax.set_title('Top Processes')
                 st.pyplot(fig) 
+                plt.savefig(busline+' ' +technololgy+" top process.png", format="png", dpi=600)
 
                 fig, ax = plt.subplots()
                 y_pos = np.arange(len(emission_name))
@@ -2028,11 +2054,12 @@ if lca:
                 ax.set_xlabel('DALY/pkm')
                 ax.set_title('Top Emissions')
                 st.pyplot(fig) 
+                plt.savefig(busline+' ' +technololgy+" top Emissions.png", format="png", dpi=600)
             
             st.write(" prcocess contribution of a ASSURED bus use phase")
-            plot_contribution(usephase12m)
+            plot_contribution(usephase12m,'ASSURED')
             st.write(" prcocess contribution of a Diesel bus use phase")
-            plot_contribution(use12mdiesel)
+            plot_contribution(use12mdiesel, 'Diesel')
         
         else: 
             total_imact_bus =  n12m_bus*(do_lca(bus12mproduction, method = method)[0]/personkm12m)
@@ -2069,33 +2096,39 @@ if lca:
             st.pyplot(fig)
 
             def top_processes_by_name(lca):
-                names = defaultdict(list)
+                # names = defaultdict(list)
             
-                for flow in ecodb:
-                    if flow.key in lca.activity_dict:
-                        names[flow['name']].append(
-                            lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
-                        )
+                # for flow in ecodb:
+                #     if flow.key in lca.activity_dict:
+                #         names[flow['name']].append(
+                #             lca.characterized_inventory[:, lca.activity_dict[flow.key]].sum()
+                #         )
                 
-                return sorted(
-                    [(sum(scores), name) for name, scores in names.items()], 
-                    reverse=True
-                            )
+                # return sorted(
+                #     [(sum(scores), name) for name, scores in names.items()], 
+                #     reverse=True
+                #             )
+                ca = bwa.ContributionAnalysis()
+                process = ca.annotated_top_processes(lca, limit = 5)
+                return [(x[0], x[2]) for x in process]
             def top_emissions_by_name(lca):
-                names = defaultdict(list)
+                # names = defaultdict(list)
             
-                for flow in bw.Database("biosphere3"):
-                    if flow.key in lca.biosphere_dict:
-                        names[flow['name']].append(
-                            lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
-                        )
+                # for flow in bw.Database("biosphere3"):
+                #     if flow.key in lca.biosphere_dict:
+                #         names[flow['name']].append(
+                #             lca.characterized_inventory[lca.biosphere_dict[flow.key], :].sum()
+                #         )
                 
-                return sorted(
-                    [(sum(scores), name) for name, scores in names.items()], 
-                    reverse=True
-                )
+                # return sorted(
+                #     [(sum(scores), name) for name, scores in names.items()], 
+                #     reverse=True
+                # )
+                ca = bwa.ContributionAnalysis()
+                process = ca.annotated_top_emissions(lca, limit = 5)
+                return [(x[0], x[2]) for x in process]     
             
-            def plot_contribution(activity):
+            def plot_contribution(activity, technololgy):
                 lcaobj = do_lca(activity, method = method)[1]
                 #proceses 
                 top_process = top_processes_by_name(lcaobj)[:5]
@@ -2116,6 +2149,7 @@ if lca:
                 ax.set_xlabel('DALY/pkm')
                 ax.set_title('Top Processes')
                 st.pyplot(fig) 
+                plt.savefig(busline+' ' +technololgy+" top process.png", format="png", dpi=600)
 
                 fig, ax = plt.subplots()
                 y_pos = np.arange(len(emission_name))
@@ -2126,11 +2160,12 @@ if lca:
                 ax.set_xlabel('DALY/pkm')
                 ax.set_title('Top Emissions')
                 st.pyplot(fig) 
+                plt.savefig(busline+' ' +technololgy+" top emission.png", format="png", dpi=600)
             
             st.write(" prcocess contribution of a ASSURED bus use phase")
-            plot_contribution(usephase12m)
+            plot_contribution(usephase12m, 'ASSURED')
             st.write(" prcocess contribution of a Diesel bus use phase")
-            plot_contribution(use12mdiesel)
+            plot_contribution(use12mdiesel, 'Diesel')
             
             
     st.subheader('ReCiPe 2016(H) - Human health, Aggregated DALY ')
